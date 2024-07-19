@@ -47,7 +47,12 @@ int main (int argc, char **argv)
 
         // Temp
         for (size_t i = 0; i < p.size (); ++i)
-            q[i].prediction = p[i].cls;
+        {
+            if (!args.use_predictions)
+                q[i].prediction = p[i].cls;
+            else if (q[i].prediction != 0)
+                q[i].prediction = p[i].prediction;
+        }
 
         // Write classified output to stdout
         write_photons (cout, q);

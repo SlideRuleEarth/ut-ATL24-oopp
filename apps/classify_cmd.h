@@ -13,6 +13,7 @@ struct args
 {
     bool help = false;
     bool verbose = false;
+    bool use_predictions = false;
 };
 
 std::ostream &operator<< (std::ostream &os, const args &args)
@@ -20,6 +21,7 @@ std::ostream &operator<< (std::ostream &os, const args &args)
     os << std::boolalpha;
     os << "help: " << args.help << std::endl;
     os << "verbose: " << args.verbose << std::endl;
+    os << "use_predictions: " << args.use_predictions << std::endl;
     return os;
 }
 
@@ -32,6 +34,7 @@ args get_args (int argc, char **argv, const std::string &usage)
         static struct option long_options[] = {
             {"help", no_argument, 0,  'h' },
             {"verbose", no_argument, 0,  'v' },
+            {"use-predictions", no_argument, 0,  'p' },
             {0,      0,           0,  0 }
         };
 
@@ -52,6 +55,7 @@ args get_args (int argc, char **argv, const std::string &usage)
                 return args;
             }
             case 'v': args.verbose = true; break;
+            case 'p': args.use_predictions = true; break;
         }
     }
 
