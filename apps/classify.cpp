@@ -28,7 +28,7 @@ int main (int argc, char **argv)
         }
 
         // Start a timer
-        timer t;
+        timer t0;
 
         // Read the points
         const auto df = dataframe::read (cin);
@@ -41,6 +41,9 @@ int main (int argc, char **argv)
             clog << p.size () << " points read" << endl;
             clog << "Classifying points" << endl;
         }
+
+        // Start a timer
+        timer t1;
 
         // Classify the points
         //
@@ -56,22 +59,30 @@ int main (int argc, char **argv)
                 q[i] = p[i].prediction;
         }
 
+        // Time the classification only
+        t1.stop ();
+
         // Write classified output to stdout
         write_predictions (cout, p, q);
 
-        // Get the elapsed time
-        t.stop ();
+        // Time classification and I/O
+        t0.stop ();
 
         // Write out performance stats
         if (args.verbose)
         {
-            const double e = t.elapsed_ns ();
-            const double s = (e == 0.0) ? 0.0 : e / 1'000'000'000;
-            const size_t pps = (s == 0.0) ? 0.0 : p.size () / s;
+            const double e0 = t0.elapsed_ns ();
+            const double e1 = t1.elapsed_ns ();
+            const double s0 = (e0 == 0.0) ? 0.0 : e0 / 1'000'000'000;
+            const double s1 = (e1 == 0.0) ? 0.0 : e1 / 1'000'000'000;
+            const size_t pps0 = (s0 == 0.0) ? 0.0 : p.size () / s0;
+            const size_t pps1 = (s1 == 0.0) ? 0.0 : p.size () / s1;
+            clog.imbue (std::locale (""));
             clog << fixed;
+            clog << setprecision(3);
             clog << p.size () << " photons" << endl;
-            clog << s << " seconds" << endl;
-            clog << pps << " photons/sec" << endl;
+            clog << s0 << "/" << s1 << " total/process seconds" << endl;
+            clog << pps0 << "/" << pps1 << " total/process photons/second" << endl;
         }
 
         return 0;

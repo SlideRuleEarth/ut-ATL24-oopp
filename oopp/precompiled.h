@@ -7,6 +7,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <limits>
+#include <locale>
 #include <map>
 #include <random>
 #include <set>
