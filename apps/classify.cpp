@@ -43,23 +43,26 @@ int main (int argc, char **argv)
         }
 
         // Classify the points
-        auto q (p);
+        //
+        // Set default to '1' = unknown
+        vector<unsigned> q (p.size (), 1);
 
         // Temp
         for (size_t i = 0; i < p.size (); ++i)
         {
             if (!args.use_predictions)
-                q[i].prediction = p[i].cls;
-            else if (q[i].prediction != 0)
-                q[i].prediction = p[i].prediction;
+                q[i] = p[i].cls;
+            else if (p[i].prediction != 0)
+                q[i] = p[i].prediction;
         }
 
         // Write classified output to stdout
-        write_photons (cout, q);
+        write_predictions (cout, p, q);
 
         // Get the elapsed time
         t.stop ();
 
+        // Write out performance stats
         if (args.verbose)
         {
             const double e = t.elapsed_ns ();

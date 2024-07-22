@@ -24,8 +24,8 @@ const std::string PREDICTION_NAME = std::string ("prediction");
 const std::string SEA_SURFACE_NAME = std::string ("sea_surface_h");
 const std::string BATHY_NAME = std::string ("bathy_h");
 
-template<typename T>
-void write_photons (std::ostream &os, const T &p)
+template<typename T,typename U>
+void write_predictions (std::ostream &os, const T &p, const U &q)
 {
     using namespace std;
 
@@ -48,7 +48,7 @@ void write_photons (std::ostream &os, const T &p)
         os << "," << p[i].cls;
         // Write the prediction
         os << setprecision (0) << fixed;
-        os << "," << p[i].prediction;
+        os << "," << q[i];
         // Write the surface estimate
         os << setprecision (4) << fixed;
         os << "," << p[i].surface_elevation;
