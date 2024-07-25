@@ -16,13 +16,27 @@ struct photon
     double bathy_elevation;
 };
 
-const std::string PI_NAME = std::string ("index_ph");
-const std::string X_NAME = std::string ("x_atc");
-const std::string Z_NAME = std::string ("geoid_corr_h");
-const std::string LABEL_NAME = std::string ("manual_label");
-const std::string PREDICTION_NAME = std::string ("prediction");
-const std::string SEA_SURFACE_NAME = std::string ("sea_surface_h");
-const std::string BATHY_NAME = std::string ("bathy_h");
+std::ostream &operator<< (std::ostream &os, const photon &p)
+{
+    os << "index=" << p.h5_index
+        << ",x=" << p.x
+        << ",z=" << p.z
+        << ",cls=" << p.cls
+        << ",prediction=" << p.prediction
+        << ",surface_elevation=" << p.surface_elevation
+        << ",bathy_elevation=" << p.bathy_elevation
+        << std::endl;
+    return os;
+}
+
+struct params
+{
+    double x_resolution = 10.0; // meters
+    double z_resolution = 0.2; // meters
+    double z_min = -50; // meters
+    double z_max = 30; // meters
+    double window_overlap = 2.0; // meters
+};
 
 template<typename T,typename U>
 void write_predictions (std::ostream &os, const T &p, const U &q)
@@ -62,127 +76,124 @@ void write_predictions (std::ostream &os, const T &p, const U &q)
     os.precision (pr);
 }
 
-template<typename T>
-std::vector<oopp::photon> convert_dataframe (
-    const T &df,
-    bool &has_manual_label,
-    bool &has_predictions,
-    bool &has_surface_elevations,
-    bool &has_bathy_elevations)
+// Get a vector in which each entry corresponds to a (e.g. 10 meter) bin.
+//
+// Each bin will contain a vector the photon indexes that belong to that bin.
+template<typename T,typename U>
+std::vector<std::vector<size_t>> get_h_bins (const T &p, const U &params)
+{
+    using namespace std;
+    vector<vector<size_t>> bins;
+
+    if (p.empty ())
+        return bins;
+
+    // Get the bounds
+    const double x_min = min_element (p.begin (), p.end (),
+            [](const auto &a, const auto &b) { return a.x < b.x; })->x;
+    const double x_max = max_element (p.begin (), p.end (),
+            [](const auto &a, const auto &b) { return a.x < b.x; })->x;
+
+    // Allocate vector of indexes
+    const size_t total_bins = (x_max - x_min) / params.x_resolution + 1;
+    bins.resize (total_bins);
+
+    // Add indexes
+    for (size_t i = 0; i < p.size (); ++i)
+    {
+        // Don't add ones that are out of range
+        const double z = p[i].z;
+        if (z > params.z_max || z < params.z_min)
+            continue;
+
+        assert (p[i].x >= x_min);
+        size_t bin = (p[i].x - x_min) / params.x_resolution;
+        assert (bin < bins.size ());
+        bins[bin].push_back (i);
+    }
+
+    return bins;
+}
+
+template<typename T,typename U,typename V>
+std::vector<std::vector<size_t>> get_v_bins (const T &p, U indexes, const V &params)
 {
     using namespace std;
 
-    // Check invariants
-    assert (df.is_valid ());
-    assert (df.rows () != 0);
-    assert (df.cols () != 0);
-
-    // Get number of photons in this file
-    const size_t nrows = df.rows ();
-
-    // Get the columns we are interested in
-    const auto headers = df.get_headers ();
-    auto pi_it = find (headers.begin(), headers.end(), PI_NAME);
-    auto x_it = find (headers.begin(), headers.end(), X_NAME);
-    auto z_it = find (headers.begin(), headers.end(), Z_NAME);
-    auto cls_it = find (headers.begin(), headers.end(), LABEL_NAME);
-    auto prediction_it = find (headers.begin(), headers.end(), PREDICTION_NAME);
-    auto surface_elevation_it = find (headers.begin(), headers.end(), SEA_SURFACE_NAME);
-    auto bathy_elevation_it = find (headers.begin(), headers.end(), BATHY_NAME);
-
-    if (pi_it == headers.end ())
-        throw runtime_error ("Can't find 'ph_index' in dataframe");
-    if (x_it == headers.end ())
-        throw runtime_error ("Can't find 'along_track_dist' in dataframe");
-    if (z_it == headers.end ())
-        throw runtime_error ("Can't find 'geoid_corrected_h' in dataframe");
-
-    has_manual_label = cls_it != headers.end ();
-    has_predictions = prediction_it != headers.end ();
-    has_surface_elevations = surface_elevation_it != headers.end ();
-    has_bathy_elevations = bathy_elevation_it != headers.end ();
-
-    // Stuff values into the vector
-    std::vector<oopp::photon> dataset (nrows);
-
-    for (size_t i = 0; i < nrows; ++i)
+    assert (params.z_max > params.z_min);
+    const size_t total_bins = (params.z_max - params.z_min) / params.z_resolution + 1;
+    vector<vector<size_t>> bins (total_bins);
+    for (const auto i : indexes)
     {
-        // Make assignments
-        dataset[i].h5_index = df.get_value (PI_NAME, i);
-        dataset[i].x = df.get_value (X_NAME, i);
-        dataset[i].z = df.get_value (Z_NAME, i);
-        if (has_manual_label)
-            dataset[i].cls = df.get_value (LABEL_NAME, i);
-        if (has_predictions)
-            dataset[i].prediction = df.get_value (PREDICTION_NAME, i);
-        if (has_surface_elevations)
-            dataset[i].surface_elevation = df.get_value (SEA_SURFACE_NAME, i);
-        if (has_bathy_elevations)
-            dataset[i].bathy_elevation = df.get_value (BATHY_NAME, i);
+        assert (i < p.size ());
+        assert (p[i].z >= params.z_min);
+        size_t bin = (p[i].z - params.z_min) / params.z_resolution;
+        assert (bin < bins.size ());
+        bins[bin].push_back (i);
     }
 
-    return dataset;
+    return bins;
 }
 
-template<typename T>
-std::vector<oopp::photon> convert_dataframe (const T &df)
+template<typename T,typename U>
+std::vector<size_t> get_surface_indexes (const T &p, const U &v_bins)
 {
-    bool has_manual_label;
-    bool has_predictions;
-    bool has_surface_elevations;
-    bool has_bathy_elevations;
-
-    return convert_dataframe (df,
-        has_manual_label,
-        has_predictions,
-        has_surface_elevations,
-        has_bathy_elevations);
+    std::vector<size_t> indexes;
+    return indexes;
 }
 
-template<typename T>
-std::vector<oopp::photon> convert_dataframe (const T &df,
-    bool &has_manual_label,
-    bool &has_predictions)
+template<typename T,typename U>
+std::vector<size_t> get_bathy_indexes (const T &p, const U &v_bins)
 {
-    bool has_surface_elevations;
-    bool has_bathy_elevations;
-
-    return convert_dataframe (df,
-        has_manual_label,
-        has_predictions,
-        has_surface_elevations,
-        has_bathy_elevations);
+    std::vector<size_t> indexes;
+    return indexes;
 }
 
-class timer
+template<typename T,typename U>
+std::vector<unsigned> classify (const T &p, const U &params, const bool use_predictions)
 {
-private:
-    std::chrono::time_point<std::chrono::system_clock> t1;
-    std::chrono::time_point<std::chrono::system_clock> t2;
-    bool running;
+    // Get indexes of photons in each along-track bin
+    const auto h_bins = get_h_bins (p, params);
 
-public:
-    timer () : running (false)
+    // Set default prediction to '1' = unknown
+    std::vector<unsigned> q (p.size (), 1);
+
+    // Assign predictions
+#pragma omp parallel for
+    for (size_t i = 0; i < h_bins.size (); ++i)
     {
-        start ();
+        // Construct distribution at each bin
+        //
+        // std::move() the bins, so 'h_bins[i]' will be valid but
+        // unspecified after the call
+        const auto v_bins = get_v_bins (p, move (h_bins[i]), params);
+
+        // Convert the histogram to a pdf
+
+        //h = gaussian_filter1d(h_, 0.1/self.res_z)
+
+        // Assign surface
+        const auto s = get_surface_indexes (p, v_bins);
+        for (auto j : s)
+        {
+            if (!use_predictions)
+                q[j] = p[j].cls;
+            else if (p[j].prediction != 0)
+                q[j] = p[j].prediction;
+        }
+
+        // Assign bathy
+        const auto b = get_bathy_indexes (p, v_bins);
+        for (auto j : b)
+        {
+            if (!use_predictions)
+                q[j] = p[j].cls;
+            else if (p[j].prediction != 0)
+                q[j] = p[j].prediction;
+        }
     }
-    void start ()
-    {
-        t1 = std::chrono::system_clock::now ();
-        running = true;
-    }
-    void stop ()
-    {
-        t2 = std::chrono::system_clock::now ();
-        running = false;
-    }
-    double elapsed_ns()
-    {
-        using namespace std::chrono;
-        return running
-            ? duration_cast<nanoseconds> (system_clock::now () - t1).count ()
-            : duration_cast<nanoseconds> (t2 - t1).count ();
-    }
-};
+
+    return q;
+}
 
 } // namespace oopp

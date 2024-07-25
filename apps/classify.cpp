@@ -1,5 +1,6 @@
 #include "oopp/precompiled.h"
 #include "oopp/dataframe.h"
+#include "oopp/timer.h"
 #include "classify_cmd.h"
 #include "oopp.h"
 
@@ -28,7 +29,7 @@ int main (int argc, char **argv)
         }
 
         // Start a timer
-        timer t0;
+        timer::timer t0;
 
         // Read the points
         const auto df = dataframe::read (cin);
@@ -43,21 +44,10 @@ int main (int argc, char **argv)
         }
 
         // Start a timer
-        timer t1;
+        timer::timer t1;
 
         // Classify the points
-        //
-        // Set default to '1' = unknown
-        vector<unsigned> q (p.size (), 1);
-
-        // Temp
-        for (size_t i = 0; i < p.size (); ++i)
-        {
-            if (!args.use_predictions)
-                q[i] = p[i].cls;
-            else if (p[i].prediction != 0)
-                q[i] = p[i].prediction;
-        }
+        const auto q = classify (p, args.params, args.use_predictions);
 
         // Time the classification only
         t1.stop ();

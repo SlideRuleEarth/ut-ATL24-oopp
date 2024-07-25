@@ -2,6 +2,7 @@
 
 #include "oopp/precompiled.h"
 #include "oopp/cmd_utils.h"
+#include "oopp/oopp.h"
 
 namespace oopp
 {
@@ -14,11 +15,7 @@ struct args
     bool help = false;
     bool verbose = false;
     bool use_predictions = false;
-    double x_resolution = 10.0; // meters
-    double z_resolution = 0.2; // meters
-    double z_min = -50; // meters
-    double z_max = 30; // meters
-    double window_overlap = 2.0; // meters
+    oopp::params params;
 };
 
 std::ostream &operator<< (std::ostream &os, const args &args)
@@ -27,11 +24,11 @@ std::ostream &operator<< (std::ostream &os, const args &args)
     os << "help: " << args.help << std::endl;
     os << "verbose: " << args.verbose << std::endl;
     os << "use-predictions: " << args.use_predictions << std::endl;
-    os << "x-resolution: " << args.x_resolution << std::endl;
-    os << "z-resolution: " << args.z_resolution << std::endl;
-    os << "z-min: " << args.z_min << std::endl;
-    os << "z-max: " << args.z_max << std::endl;
-    os << "window-overlap: " << args.window_overlap << std::endl;
+    os << "x-resolution: " << args.params.x_resolution << std::endl;
+    os << "z-resolution: " << args.params.z_resolution << std::endl;
+    os << "z-min: " << args.params.z_min << std::endl;
+    os << "z-max: " << args.params.z_max << std::endl;
+    os << "window-overlap: " << args.params.window_overlap << std::endl;
     return os;
 }
 
@@ -71,11 +68,11 @@ args get_args (int argc, char **argv, const std::string &usage)
             }
             case 'v': args.verbose = true; break;
             case 'p': args.use_predictions = true; break;
-            case 'x': args.x_resolution = atof (optarg); break;
-            case 'z': args.z_resolution = atof (optarg); break;
-            case 'i': args.z_min = atof (optarg); break;
-            case 'a': args.z_max = atof (optarg); break;
-            case 'w': args.window_overlap = atof (optarg); break;
+            case 'x': args.params.x_resolution = atof (optarg); break;
+            case 'z': args.params.z_resolution = atof (optarg); break;
+            case 'i': args.params.z_min = atof (optarg); break;
+            case 'a': args.params.z_max = atof (optarg); break;
+            case 'w': args.params.window_overlap = atof (optarg); break;
         }
     }
 

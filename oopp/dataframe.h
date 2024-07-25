@@ -1,12 +1,21 @@
 #pragma once
 
 #include "oopp/precompiled.h"
+#include "oopp/oopp.h"
 
 namespace oopp
 {
 
 namespace dataframe
 {
+
+const std::string PI_NAME = std::string ("index_ph");
+const std::string X_NAME = std::string ("x_atc");
+const std::string Z_NAME = std::string ("geoid_corr_h");
+const std::string LABEL_NAME = std::string ("manual_label");
+const std::string PREDICTION_NAME = std::string ("prediction");
+const std::string SEA_SURFACE_NAME = std::string ("sea_surface_h");
+const std::string BATHY_NAME = std::string ("bathy_h");
 
 class dataframe
 {
@@ -247,6 +256,95 @@ std::ostream &write (const std::string &filename, const dataframe &df, const siz
 std::ostream &operator<< (std::ostream &os, const dataframe &df)
 {
     return write (os , df);
+}
+
+std::vector<photon> convert_dataframe (
+    const dataframe &df,
+    bool &has_manual_label,
+    bool &has_predictions,
+    bool &has_surface_elevations,
+    bool &has_bathy_elevations)
+{
+    using namespace std;
+
+    // Check invariants
+    assert (df.is_valid ());
+    assert (df.rows () != 0);
+    assert (df.cols () != 0);
+
+    // Get number of photons in this file
+    const size_t nrows = df.rows ();
+
+    // Get the columns we are interested in
+    const auto headers = df.get_headers ();
+    auto pi_it = find (headers.begin(), headers.end(), PI_NAME);
+    auto x_it = find (headers.begin(), headers.end(), X_NAME);
+    auto z_it = find (headers.begin(), headers.end(), Z_NAME);
+    auto cls_it = find (headers.begin(), headers.end(), LABEL_NAME);
+    auto prediction_it = find (headers.begin(), headers.end(), PREDICTION_NAME);
+    auto surface_elevation_it = find (headers.begin(), headers.end(), SEA_SURFACE_NAME);
+    auto bathy_elevation_it = find (headers.begin(), headers.end(), BATHY_NAME);
+
+    if (pi_it == headers.end ())
+        throw runtime_error ("Can't find 'ph_index' in dataframe");
+    if (x_it == headers.end ())
+        throw runtime_error ("Can't find 'along_track_dist' in dataframe");
+    if (z_it == headers.end ())
+        throw runtime_error ("Can't find 'geoid_corrected_h' in dataframe");
+
+    has_manual_label = cls_it != headers.end ();
+    has_predictions = prediction_it != headers.end ();
+    has_surface_elevations = surface_elevation_it != headers.end ();
+    has_bathy_elevations = bathy_elevation_it != headers.end ();
+
+    // Stuff values into the vector
+    std::vector<photon> dataset (nrows);
+
+    for (size_t i = 0; i < nrows; ++i)
+    {
+        // Make assignments
+        dataset[i].h5_index = df.get_value (PI_NAME, i);
+        dataset[i].x = df.get_value (X_NAME, i);
+        dataset[i].z = df.get_value (Z_NAME, i);
+        if (has_manual_label)
+            dataset[i].cls = df.get_value (LABEL_NAME, i);
+        if (has_predictions)
+            dataset[i].prediction = df.get_value (PREDICTION_NAME, i);
+        if (has_surface_elevations)
+            dataset[i].surface_elevation = df.get_value (SEA_SURFACE_NAME, i);
+        if (has_bathy_elevations)
+            dataset[i].bathy_elevation = df.get_value (BATHY_NAME, i);
+    }
+
+    return dataset;
+}
+
+std::vector<photon> convert_dataframe (const dataframe &df)
+{
+    bool has_manual_label;
+    bool has_predictions;
+    bool has_surface_elevations;
+    bool has_bathy_elevations;
+
+    return convert_dataframe (df,
+        has_manual_label,
+        has_predictions,
+        has_surface_elevations,
+        has_bathy_elevations);
+}
+
+std::vector<photon> convert_dataframe (const dataframe &df,
+    bool &has_manual_label,
+    bool &has_predictions)
+{
+    bool has_surface_elevations;
+    bool has_bathy_elevations;
+
+    return convert_dataframe (df,
+        has_manual_label,
+        has_predictions,
+        has_surface_elevations,
+        has_bathy_elevations);
 }
 
 } // namespace dataframe
