@@ -25,6 +25,8 @@ macro(add_test name)
 endmacro()
 
 add_test(test_dataframe)
+add_test(test_oopp)
+add_test(test_utils)
 
 ############################################################
 # Applications
