@@ -59,6 +59,12 @@ classify: build
 score: build
 	@find $(INPUT) | head | parallel --verbose --lb --jobs=32 --halt now,fail=1 \
 		"build/debug/score --verbose < predictions/{/.}_classified.csv > predictions/{/.}_score.txt"
+	@echo "Noise"
+	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 0
+	@echo "Surface"
+	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 41
+	@echo "Bathy"
+	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 40
 
 ##############################################################################
 #
