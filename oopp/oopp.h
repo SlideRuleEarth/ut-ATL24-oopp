@@ -291,8 +291,8 @@ std::vector<unsigned> classify (const T &p, const U &params, const bool use_pred
     // Get indexes of photons in each along-track bin
     const auto h_bins = get_h_bins (p, params);
 
-    // Set default prediction to '1' = unknown
-    vector<unsigned> q (p.size (), 1);
+    // Set default prediction to '0'
+    vector<unsigned> q (p.size (), 0);
 
     // Assign predictions
 #pragma omp parallel for
