@@ -73,6 +73,30 @@ void test_median ()
     VERIFY (y == 5);
 }
 
+void test_pmf ()
+{
+    {
+    vector<size_t> h (10, 1.0);
+    const auto p = convert_to_pmf (h);
+    VERIFY (round (p[0] * 100) == 10);
+    }
+
+    {
+    vector<size_t> h (1, 1000.0);
+    const auto p = convert_to_pmf (h);
+    VERIFY (round (p[0] * 100) == 100);
+    }
+
+    {
+    vector<size_t> h { 20, 80, 0, 100 };
+    const auto p = convert_to_pmf (h);
+    VERIFY (round (p[0] * 100) == 10);
+    VERIFY (round (p[1] * 100) == 40);
+    VERIFY (round (p[2] * 100) == 0);
+    VERIFY (round (p[3] * 100) == 50);
+    }
+}
+
 void test_gaussian_filter ()
 {
     {
@@ -127,6 +151,7 @@ int main ()
         test_variance ();
         test_z_score ();
         test_median ();
+        test_pmf ();
         test_gaussian_filter ();
         test_find_peaks ();
 

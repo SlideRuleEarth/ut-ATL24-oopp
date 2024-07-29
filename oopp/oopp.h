@@ -1,6 +1,7 @@
 #pragma once
 
 #include "oopp/precompiled.h"
+#include "oopp/utils.h"
 
 namespace oopp
 {
@@ -36,6 +37,7 @@ struct params
     double z_min = -50; // meters
     double z_max = 30; // meters
     double window_overlap = 2.0; // meters
+    double vertical_smoothing_sigma = 0.5; // meters
 };
 
 template<typename T,typename U>
@@ -152,11 +154,14 @@ std::vector<size_t> get_bathy_indexes (const T &p, const U &v_bins)
 template<typename T,typename U>
 std::vector<unsigned> classify (const T &p, const U &params, const bool use_predictions)
 {
+    using namespace std;
+    using namespace oopp::utils;
+
     // Get indexes of photons in each along-track bin
     const auto h_bins = get_h_bins (p, params);
 
     // Set default prediction to '1' = unknown
-    std::vector<unsigned> q (p.size (), 1);
+    vector<unsigned> q (p.size (), 1);
 
     // Assign predictions
 #pragma omp parallel for
@@ -168,12 +173,20 @@ std::vector<unsigned> classify (const T &p, const U &params, const bool use_pred
         // unspecified after the call
         const auto v_bins = get_v_bins (p, move (h_bins[i]), params);
 
-        // Convert the histogram to a pdf
+        // Get a histogram from the bin indexes
+        vector<size_t> h (v_bins.size ());
 
-        //h = gaussian_filter1d(h_, 0.1/self.res_z)
+        transform (v_bins.begin (), v_bins.end (), h.begin (),
+            [&](const auto &b) { return b.size (); });
+
+        // Convert the histogram to a probability mass function
+        auto pmf = convert_to_pmf<float> (h);
+
+        // Smooth it
+        pmf = gaussian_1D_filter (pmf, params.vertical_smoothing_sigma);
 
         // Assign surface
-        const auto s = get_surface_indexes (p, v_bins);
+        const auto s = get_surface_indexes (p, pmf);
         for (auto j : s)
         {
             if (!use_predictions)

@@ -120,6 +120,28 @@ typename T::value_type median (T x)
     return x[x.size () / 2];
 }
 
+/// @brief Convert a histogram to a probability mass function
+/// @tparam T Container type
+/// @param h Histogram
+/// @return PMF
+template <typename T=double,typename U>
+std::vector<T> convert_to_pmf (const U &h)
+{
+    using namespace std;
+
+    // Sum values in histogram
+    const typename U::value_type sum = accumulate (h.begin (), h.end (), 0);
+
+    // Return value
+    vector<T> p (h.size ());
+
+    // Convert to probability mass
+    transform (h.begin (), h.end (), p.begin (),
+        [&](const auto i) { return static_cast<T> (i) / sum; });
+
+    return p;
+}
+
 namespace detail
 {
 
