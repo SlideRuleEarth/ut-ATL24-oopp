@@ -24,11 +24,7 @@ std::ostream &operator<< (std::ostream &os, const args &args)
     os << "help: " << args.help << std::endl;
     os << "verbose: " << args.verbose << std::endl;
     os << "use-predictions: " << args.use_predictions << std::endl;
-    os << "x-resolution: " << args.params.x_resolution << std::endl;
-    os << "z-resolution: " << args.params.z_resolution << std::endl;
-    os << "z-min: " << args.params.z_min << std::endl;
-    os << "z-max: " << args.params.z_max << std::endl;
-    os << "window-overlap: " << args.params.window_overlap << std::endl;
+    os << args.params;
     return os;
 }
 
@@ -46,11 +42,10 @@ args get_args (int argc, char **argv, const std::string &usage)
             {"z-resolution", required_argument, 0,  'z' },
             {"z-min", required_argument, 0,  'i' },
             {"z-max", required_argument, 0,  'a' },
-            {"window-overlap", required_argument, 0,  'w' },
             {0,      0,           0,  0 }
         };
 
-        int c = getopt_long(argc, argv, "hvpx:z:i:a:w:", long_options, &option_index);
+        int c = getopt_long(argc, argv, "hvpx:z:i:a:", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -72,7 +67,6 @@ args get_args (int argc, char **argv, const std::string &usage)
             case 'z': args.params.z_resolution = atof (optarg); break;
             case 'i': args.params.z_min = atof (optarg); break;
             case 'a': args.params.z_max = atof (optarg); break;
-            case 'w': args.params.window_overlap = atof (optarg); break;
         }
     }
 
