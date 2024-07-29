@@ -36,9 +36,23 @@ struct params
     double z_resolution = 0.2; // meters
     double z_min = -50; // meters
     double z_max = 30; // meters
-    double window_overlap = 2.0; // meters
     double vertical_smoothing_sigma = 0.5; // meters
+    double min_peak_prominence = 0.01; // probability
+    size_t min_peak_distance = 0; // bins
 };
+
+std::ostream &operator<< (std::ostream &os, const params &params)
+{
+    os << "x-resolution: " << params.x_resolution << "m" << std::endl;
+    os << "z-resolution: " << params.z_resolution << "m" << std::endl;
+    os << "z-min: " << params.z_min << "m" << std::endl;
+    os << "z-max: " << params.z_max << "m" << std::endl;
+    os << "vertical-smoothing-sigma: " << "m" << params.vertical_smoothing_sigma << std::endl;
+    os << "min-peak-prominence: " << params.min_peak_prominence << std::endl;
+    os << "min-peak-distance: " << params.min_peak_distance << " bins" << std::endl;
+
+    return os;
+}
 
 template<typename T,typename U>
 void write_predictions (std::ostream &os, const T &p, const U &q)
@@ -118,14 +132,14 @@ std::vector<std::vector<size_t>> get_h_bins (const T &p, const U &params)
 }
 
 template<typename T,typename U,typename V>
-std::vector<std::vector<size_t>> get_v_bins (const T &p, U indexes, const V &params)
+std::vector<std::vector<size_t>> get_v_bins (const T &p, const U &h_bins, const V &params)
 {
     using namespace std;
 
     assert (params.z_max > params.z_min);
     const size_t total_bins = (params.z_max - params.z_min) / params.z_resolution + 1;
     vector<vector<size_t>> bins (total_bins);
-    for (const auto i : indexes)
+    for (const auto i : h_bins)
     {
         assert (i < p.size ());
         assert (p[i].z >= params.z_min);
@@ -137,17 +151,134 @@ std::vector<std::vector<size_t>> get_v_bins (const T &p, U indexes, const V &par
     return bins;
 }
 
-template<typename T,typename U>
-std::vector<size_t> get_surface_indexes (const T &p, const U &v_bins)
+template<typename T,typename U,typename V,typename W>
+std::vector<size_t> get_surface_indexes (const T &p,
+    const U &v_bins,
+    const V &peaks,
+    const W &params)
 {
-    std::vector<size_t> indexes;
+    using namespace oopp::utils;
+    using namespace std;
+
+    // Return value
+    vector<size_t> indexes;
+
+    if (peaks.empty ())
+        return indexes;
+
+    // What is the elevation of the highest elevation peak?
+    //
+    // Peaks are stored from lowest to highest elevation, so the last
+    // peak is the one we want.
+    //
+    // The indexes in the peaks vector are indexes into the vertical bins
+    assert (peaks.back () < v_bins.size ());
+    const auto photon_indexes = v_bins[peaks.back ()];
+
+    // Check our logic
+    assert (!photon_indexes.empty ());
+    const double surface_elevation = p[photon_indexes[0]].z;
+
+    // Get all photons within a certain range of the surface elevation
+    const double max_distance = 2.0; // meters
+    vector<double> surface_photons;
+    surface_photons.reserve (v_bins.size ());
+
+    for (auto i : v_bins)
+    {
+        for (auto j : i)
+        {
+            assert (j < p.size ());
+            const double d = fabs (p[j].z - surface_elevation);
+            if (d < max_distance)
+                surface_photons.push_back (p[j].z);
+        }
+    }
+
+    // Short circuit if needed
+    if (surface_photons.empty ())
+        return indexes;
+
+    // Get shape of photon distribution near the surface
+    const double u = mean (surface_photons);
+    const double v = variance (surface_photons);
+
+    // Get the indexes of all photons in this bin within 2 standard deviations of the surface estimate
+    for (auto i : v_bins)
+    for (auto j : i)
+    {
+        assert (j < p.size ());
+        const double d = fabs (p[j].z - u);
+        if (d < sqrt (v) * 2.0)
+            indexes.push_back (j);
+    }
+
     return indexes;
 }
 
-template<typename T,typename U>
-std::vector<size_t> get_bathy_indexes (const T &p, const U &v_bins)
+template<typename T,typename U,typename V,typename W>
+std::vector<size_t> get_bathy_indexes (const T &p,
+    const U &v_bins,
+    const V &peaks,
+    const W &params)
 {
-    std::vector<size_t> indexes;
+    using namespace oopp::utils;
+    using namespace std;
+
+    // Return value
+    vector<size_t> indexes;
+
+    // We need at least two peaks
+    if (peaks.size () < 2)
+        return indexes;
+
+    // What is the elevation of the lowest elevation peak?
+    //
+    // Peaks are stored from lowest to highest elevation, so the first
+    // peak is the one we want.
+    //
+    // The indexes in the peaks vector are indexes into the vertical bins
+    assert (peaks.front () < v_bins.size ());
+    const auto photon_indexes = v_bins[peaks.front ()];
+
+    // Check our logic
+    assert (!photon_indexes.empty ());
+    const double bathy_elevation = p[photon_indexes[0]].z;
+
+    // Get all photons within a certain range of the surface elevation
+    const double max_distance = 2.0; // meters
+    vector<double> bathy_photons;
+    bathy_photons.reserve (v_bins.size ());
+
+    for (auto i : v_bins)
+    {
+        for (auto j : i)
+        {
+            assert (j < p.size ());
+            const double d = fabs (p[j].z - bathy_elevation);
+            if (d < max_distance)
+                bathy_photons.push_back (p[j].z);
+        }
+    }
+
+    // Short circuit if needed
+    if (bathy_photons.empty ())
+        return indexes;
+
+    // Get shape of photon distribution near the surface
+    const double u = mean (bathy_photons);
+    const double v = variance (bathy_photons);
+
+    // Get the indexes of all photons in this bin within 2 standard deviations of the surface estimate
+    for (auto i : v_bins)
+    for (auto j : i)
+    {
+        assert (j < p.size ());
+        const double d = fabs (p[j].z - u);
+        if (d < sqrt (v) * 2.0)
+            indexes.push_back (j);
+    }
+
     return indexes;
 }
 
@@ -167,6 +298,10 @@ std::vector<unsigned> classify (const T &p, const U &params, const bool use_pred
 #pragma omp parallel for
     for (size_t i = 0; i < h_bins.size (); ++i)
     {
+        // If there are no photons in the h_bin, there is nothing to do
+        if (h_bins[i].empty ())
+            continue;
+
         // Construct distribution at each bin
         //
         // std::move() the bins, so 'h_bins[i]' will be valid but
@@ -180,13 +315,18 @@ std::vector<unsigned> classify (const T &p, const U &params, const bool use_pred
             [&](const auto &b) { return b.size (); });
 
         // Convert the histogram to a probability mass function
-        auto pmf = convert_to_pmf<float> (h);
+        auto pmf = convert_to_pmf<double> (h);
 
         // Smooth it
         pmf = gaussian_1D_filter (pmf, params.vertical_smoothing_sigma);
 
+        // Get peaks from the PMF
+        const auto peaks = find_peaks (pmf,
+            params.min_peak_prominence,
+            params.min_peak_distance);
+
         // Assign surface
-        const auto s = get_surface_indexes (p, pmf);
+        const auto s = get_surface_indexes (p, v_bins, peaks, params);
         for (auto j : s)
         {
             if (!use_predictions)
@@ -196,7 +336,7 @@ std::vector<unsigned> classify (const T &p, const U &params, const bool use_pred
         }
 
         // Assign bathy
-        const auto b = get_bathy_indexes (p, v_bins);
+        const auto b = get_bathy_indexes (p, v_bins, peaks, params);
         for (auto j : b)
         {
             if (!use_predictions)
