@@ -57,6 +57,9 @@ void test_get_v_bins ()
     VERIFY (h.size () == 1);
     VERIFY (h[0].size () == 5);
     auto v = get_v_bins (p, h[0], a);
+    // bin 0   -> Lowest elevation
+    // ...
+    // bin N-1 -> Highest elevation
     VERIFY (v.size () == 6);
     VERIFY (v[0].size () == 1);
     VERIFY (v[0][0] == 0);
