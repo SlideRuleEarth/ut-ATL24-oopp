@@ -125,6 +125,7 @@ void test_gaussian_filter ()
 
 void test_find_peaks ()
 {
+    {
     vector<double> x (20);
     x[0] = 1.0;
     x[4] = 1.0;
@@ -140,6 +141,88 @@ void test_find_peaks ()
     y = find_peaks (x);
     VERIFY (y.size () == 1);
     VERIFY (y[0] == 5);
+    }
+
+    {
+    vector<double> x (10);
+    x[0] = 10;
+    x[1] = 0;
+    x[2] = 10;
+    x[3] = 20;
+    x[4] = 10;
+    x[5] = 30;
+    x[6] = 10;
+    x[7] = 0;
+    x[8] = 10;
+    x[9] = 0;
+    // Make values sum to 1.0
+    x = convert_to_pmf (x);
+    auto y = find_peaks (x);
+    VERIFY (y.size () == 3);
+    VERIFY (y[0] == 3);
+    VERIFY (y[1] == 5);
+    VERIFY (y[2] == 8);
+    double min_peak_prominance = 0.09;
+    y = find_peaks (x, min_peak_prominance);
+    VERIFY (y.size () == 3);
+    VERIFY (y[0] == 3);
+    VERIFY (y[1] == 5);
+    VERIFY (y[2] == 8);
+    min_peak_prominance = 0.11;
+    y = find_peaks (x, min_peak_prominance);
+    VERIFY (y.size () == 2);
+    VERIFY (y[0] == 3);
+    VERIFY (y[1] == 5);
+    min_peak_prominance = 0.21;
+    y = find_peaks (x, min_peak_prominance);
+    VERIFY (y.size () == 1);
+    VERIFY (y[0] == 5);
+
+    min_peak_prominance = 0.0;
+    size_t min_peak_distance = 1;
+    y = find_peaks (x, min_peak_prominance, min_peak_distance);
+    VERIFY (y.size () == 3);
+    VERIFY (y[0] == 3);
+    VERIFY (y[1] == 5);
+    VERIFY (y[2] == 8);
+
+    min_peak_distance = 2;
+    y = find_peaks (x, min_peak_prominance, min_peak_distance);
+    VERIFY (y.size () == 3);
+    VERIFY (y[0] == 3);
+    VERIFY (y[1] == 5);
+    VERIFY (y[2] == 8);
+
+    min_peak_distance = 3;
+    y = find_peaks (x, min_peak_prominance, min_peak_distance);
+    VERIFY (y.size () == 2);
+    VERIFY (y[0] == 3);
+    VERIFY (y[1] == 8);
+
+    min_peak_distance = 5;
+    y = find_peaks (x, min_peak_prominance, min_peak_distance);
+    VERIFY (y.size () == 2);
+    VERIFY (y[0] == 3);
+    VERIFY (y[1] == 8);
+
+    min_peak_distance = 6;
+    y = find_peaks (x, min_peak_prominance, min_peak_distance);
+    VERIFY (y.size () == 1);
+    VERIFY (y[0] == 3);
+
+    min_peak_prominance = 0.15;
+    min_peak_distance = 2;
+    y = find_peaks (x, min_peak_prominance, min_peak_distance);
+    VERIFY (y.size () == 2);
+    VERIFY (y[0] == 3);
+    VERIFY (y[1] == 5);
+
+    min_peak_prominance = 0.15;
+    min_peak_distance = 3;
+    y = find_peaks (x, min_peak_prominance, min_peak_distance);
+    VERIFY (y.size () == 1);
+    VERIFY (y[0] == 3);
+    }
 }
 
 int main ()
