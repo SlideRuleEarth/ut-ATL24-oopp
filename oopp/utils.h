@@ -283,17 +283,43 @@ T gaussian_1D_filter (T x, const double sigma, const size_t n = 5)
 /// @param x Container
 /// @return Peak container
 template <typename T>
-std::vector<size_t> find_peaks(const T &x)
+std::vector<size_t> find_peaks (const T &x,
+    const double min_prominence = 0.0,
+    const size_t min_distance = 0)
 {
+    // The return value
     std::vector<size_t> peaks;
 
     if (x.size() < 3)
         return peaks;
 
+    // Set a sentinel
+    size_t last_added = x.size ();
+
     // If the center value is greater than value on the left and right...
     for (size_t index = 1; index + 1 < x.size(); ++index)
-        if (x[index-1] < x[index] && x[index+1] < x[index])
-            peaks.push_back(index);
+    {
+        // Is it tall enough?
+        if (x[index] < min_prominence)
+            continue; // No...
+
+        // Is it a peak?
+        if (x[index-1] >= x[index] || x[index] <= x[index+1])
+            continue; // No...
+
+        // Is it far enough away from the last added peak?
+        if (min_distance > 1 && last_added != x.size ())
+        {
+            // Check logic
+            assert (last_added < index);
+            if (index - last_added < min_distance)
+                continue; // Too close...
+        }
+
+        // It's a peak
+        peaks.push_back (index);
+        last_added = index;
+    }
 
     return peaks;
 }
