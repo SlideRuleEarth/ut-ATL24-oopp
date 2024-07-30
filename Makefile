@@ -52,12 +52,12 @@ INPUT=./data/local/merged_Sliderule/*.csv
 .PHONY: classify # Run classifier
 classify: build
 	@mkdir -p predictions
-	@ls -1 $(INPUT) | head | parallel --verbose --lb --jobs=16 --halt now,fail=1 \
+	@ls -1 $(INPUT) | parallel --verbose --lb --jobs=16 --halt now,fail=1 \
 		"build/debug/classify --verbose < {} > predictions/{/.}_classified.csv"
 
 .PHONY: score # Score
 score: build
-	@ls -1 $(INPUT) | head | parallel --verbose --lb --jobs=16 --halt now,fail=1 \
+	@ls -1 $(INPUT) | parallel --verbose --lb --jobs=16 --halt now,fail=1 \
 		"build/debug/score --verbose < predictions/{/.}_classified.csv > predictions/{/.}_score.txt"
 	@echo "Noise"
 	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 0
@@ -65,6 +65,17 @@ score: build
 	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 41
 	@echo "Bathy"
 	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 40
+
+# qtrees,bathypathfinder,medianfilter,cshelph,coastnet,openoceans,pointnet
+.PHONY: baseline # Get baseline scores
+baseline: build
+	@./scripts/get_baseline_scores.sh "qtrees"
+	@./scripts/get_baseline_scores.sh "bathypathfinder"
+	@./scripts/get_baseline_scores.sh "medianfilter"
+	@./scripts/get_baseline_scores.sh "cshelph"
+	@./scripts/get_baseline_scores.sh "coastnet"
+	@./scripts/get_baseline_scores.sh "openoceans"
+	@./scripts/get_baseline_scores.sh "pointnet"
 
 ##############################################################################
 #
