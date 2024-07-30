@@ -52,12 +52,12 @@ INPUT=./data/local/merged_Sliderule/*.csv
 .PHONY: classify # Run classifier
 classify: build
 	@mkdir -p predictions
-	@find $(INPUT) | head | parallel --verbose --lb --jobs=32 --halt now,fail=1 \
+	@ls -1 $(INPUT) | head | parallel --verbose --lb --jobs=16 --halt now,fail=1 \
 		"build/debug/classify --verbose < {} > predictions/{/.}_classified.csv"
 
 .PHONY: score # Score
 score: build
-	@find $(INPUT) | head | parallel --verbose --lb --jobs=32 --halt now,fail=1 \
+	@ls -1 $(INPUT) | head | parallel --verbose --lb --jobs=16 --halt now,fail=1 \
 		"build/debug/score --verbose < predictions/{/.}_classified.csv > predictions/{/.}_score.txt"
 	@echo "Noise"
 	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 0
