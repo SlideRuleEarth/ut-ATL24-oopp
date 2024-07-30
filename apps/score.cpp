@@ -34,7 +34,7 @@ int main (int argc, char **argv)
         // Convert it to the correct format
         bool has_manual_label = false;
         bool has_predictions = false;
-        const auto p = convert_dataframe (df, has_manual_label, has_predictions);
+        const auto p = convert_dataframe (df, has_manual_label, has_predictions, args.prediction_label);
 
         if (args.verbose)
         {

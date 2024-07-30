@@ -14,6 +14,7 @@ struct args
     bool help = false;
     bool verbose = false;
     int cls = -1;
+    std::string prediction_label;
 };
 
 std::ostream &operator<< (std::ostream &os, const args &args)
@@ -22,6 +23,7 @@ std::ostream &operator<< (std::ostream &os, const args &args)
     os << "help: " << args.help << std::endl;
     os << "verbose: " << args.verbose << std::endl;
     os << "class: " << args.cls << std::endl;
+    os << "prediction_label: '" << args.prediction_label << "'" << std::endl;
     return os;
 }
 
@@ -35,10 +37,11 @@ args get_args (int argc, char **argv, const std::string &usage)
             {"help", no_argument, 0,  'h' },
             {"verbose", no_argument, 0,  'v' },
             {"class", required_argument, 0,  'c' },
+            {"prediction-label", required_argument, 0,  'l' },
             {0,      0,           0,  0 }
         };
 
-        int c = getopt_long(argc, argv, "hvc:", long_options, &option_index);
+        int c = getopt_long(argc, argv, "hvc:l:", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -56,6 +59,7 @@ args get_args (int argc, char **argv, const std::string &usage)
             }
             case 'v': args.verbose = true; break;
             case 'c': args.cls = atol(optarg); break;
+            case 'l': args.prediction_label = std::string(optarg); break;
         }
     }
 
