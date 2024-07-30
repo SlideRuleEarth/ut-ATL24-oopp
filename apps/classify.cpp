@@ -32,7 +32,7 @@ int main (int argc, char **argv)
         timer::timer t0;
 
         // Read the points
-        const auto df = dataframe::read (cin);
+        const auto df = dataframe::read_buffered (cin);
 
         // Convert it to the correct format
         const auto p = convert_dataframe (df);

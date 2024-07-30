@@ -29,7 +29,7 @@ int main (int argc, char **argv)
         }
 
         // Read the points
-        const auto df = dataframe::read (cin);
+        const auto df = dataframe::read_buffered (cin);
 
         // Convert it to the correct format
         bool has_manual_label = false;

@@ -139,14 +139,14 @@ dataframe read (std::istream &is)
     while (getline (ss, header, ','))
     {
         // Remove LFs in case the file was created under Windows
-        std::erase (header, '\r');
+        erase (header, '\r');
 
         // Create it
         df.add_column (header);
     }
 
     // Read the values
-    std::vector<std::vector<double>> values (df.cols ());
+    vector<vector<double>> values (df.cols ());
 
     // Now get the rows
     while (getline (is, line))
@@ -168,8 +168,7 @@ dataframe read (std::istream &is)
     }
 
     // Move the data to the dataframe
-    df.set_values (std::move (values));
-    assert (values.empty ());
+    df.set_values (move (values));
     assert (df.is_valid ());
 
     return df;
@@ -184,6 +183,80 @@ dataframe read (const std::string &fn)
         throw runtime_error ("Could not open file for reading");
 
     return oopp::dataframe::read (ifs);
+}
+
+dataframe read_buffered (std::istream &is)
+{
+    using namespace std;
+
+    // Create the dataframe
+    dataframe df;
+
+    // Read the headers
+    string line;
+
+    if (!getline (is, line))
+        return df;
+
+    // Parse each individual column header
+    stringstream ss (line);
+    string header;
+    while (getline (ss, header, ','))
+    {
+        // Remove LFs in case the file was created under Windows
+        erase (header, '\r');
+
+        // Create it
+        df.add_column (header);
+    }
+
+    // Read the file
+    vector<string> lines;
+    while (getline (is, line))
+        lines.push_back (line);
+
+    // Read the values
+    vector<vector<double>> values (df.cols (), vector<double> (lines.size ()));
+
+    // Now parse the rows
+#pragma omp parallel for
+    for (size_t i = 0; i < lines.size (); ++i)
+    {
+        // Skip empty lines
+        if (lines[i].empty ())
+            continue;
+
+        char *p = &lines[i][0];
+        for (size_t j = 0; j < df.cols (); ++j)
+        {
+            char *end;
+            const double x = strtod (p, &end);
+            assert (j < values.size ());
+            assert (i < values[j].size ());
+            values[j][i] = x;
+            p = end;
+            // Ignore ','
+            if (*p == ',')
+                ++p;
+        }
+    }
+
+    // Move the data to the dataframe
+    df.set_values (move (values));
+    assert (df.is_valid ());
+
+    return df;
+}
+
+dataframe read_buffered (const std::string &fn)
+{
+    using namespace std;
+
+    ifstream ifs (fn);
+    if (!ifs)
+        throw runtime_error ("Could not open file for reading");
+
+    return oopp::dataframe::read_buffered (ifs);
 }
 
 std::ostream &write (std::ostream &os, const dataframe &df, const size_t precision = 16)
