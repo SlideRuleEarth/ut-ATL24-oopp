@@ -77,8 +77,12 @@ int main (int argc, char **argv)
             for (size_t i = 0; i < p.size (); ++i)
             {
                 // Get values
-                const long actual = static_cast<long> (p[i].cls);
-                const long pred = static_cast<int> (p[i].prediction);
+                long actual = static_cast<long> (p[i].cls);
+                long pred = static_cast<int> (p[i].prediction);
+
+                // Map 1 -> 0
+                actual = actual == 1 ? 0 : actual;
+                pred = pred == 1 ? 0 : pred;
 
                 // Update the matrix
                 const bool is_present = (actual == cls);
