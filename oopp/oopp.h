@@ -6,6 +6,13 @@
 namespace oopp
 {
 
+// ASPRS Definitions
+constexpr unsigned unprocessed_class = 0;
+constexpr unsigned unclassified_class = 1;
+constexpr unsigned bathy_class = 40;
+constexpr unsigned sea_surface_class = 41;
+constexpr unsigned water_column_class = 45;
+
 struct photon
 {
     size_t h5_index;
@@ -328,21 +335,24 @@ std::vector<unsigned> classify (const T &p, const U &params, const bool use_pred
         // Assign surface
         const auto s = get_surface_indexes (p, v_bins, peaks, params);
         for (auto j : s)
-        {
-            if (!use_predictions)
-                q[j] = p[j].cls;
-            else if (p[j].prediction != 0)
-                q[j] = p[j].prediction;
-        }
+            q[j] = sea_surface_class;
 
         // Assign bathy
         const auto b = get_bathy_indexes (p, v_bins, peaks, params);
         for (auto j : b)
+            q[j] = bathy_class;
+
+        // Overwrite previous predictions if specified
+        if (use_predictions)
         {
-            if (!use_predictions)
-                q[j] = p[j].cls;
-            else if (p[j].prediction != 0)
-                q[j] = p[j].prediction;
+            for (auto j : v_bins)
+            {
+                for (auto k : j)
+                {
+                    if (p[k].prediction != 0)
+                        q[k] = p[k].prediction;
+                }
+            }
         }
     }
 
