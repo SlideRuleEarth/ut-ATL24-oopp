@@ -336,7 +336,8 @@ std::vector<photon> convert_dataframe (
     bool &has_manual_label,
     bool &has_predictions,
     bool &has_surface_elevations,
-    bool &has_bathy_elevations)
+    bool &has_bathy_elevations,
+    std::string prediction_label)
 {
     using namespace std;
 
@@ -354,7 +355,9 @@ std::vector<photon> convert_dataframe (
     auto x_it = find (headers.begin(), headers.end(), X_NAME);
     auto z_it = find (headers.begin(), headers.end(), Z_NAME);
     auto cls_it = find (headers.begin(), headers.end(), LABEL_NAME);
-    auto prediction_it = find (headers.begin(), headers.end(), PREDICTION_NAME);
+    if (prediction_label.empty ())
+        prediction_label = PREDICTION_NAME;
+    auto prediction_it = find (headers.begin(), headers.end(), prediction_label);
     auto surface_elevation_it = find (headers.begin(), headers.end(), SEA_SURFACE_NAME);
     auto bathy_elevation_it = find (headers.begin(), headers.end(), BATHY_NAME);
 
@@ -382,7 +385,7 @@ std::vector<photon> convert_dataframe (
         if (has_manual_label)
             dataset[i].cls = df.get_value (LABEL_NAME, i);
         if (has_predictions)
-            dataset[i].prediction = df.get_value (PREDICTION_NAME, i);
+            dataset[i].prediction = df.get_value (prediction_label, i);
         if (has_surface_elevations)
             dataset[i].surface_elevation = df.get_value (SEA_SURFACE_NAME, i);
         if (has_bathy_elevations)
@@ -398,17 +401,20 @@ std::vector<photon> convert_dataframe (const dataframe &df)
     bool has_predictions;
     bool has_surface_elevations;
     bool has_bathy_elevations;
+    std::string prediction_label;
 
     return convert_dataframe (df,
         has_manual_label,
         has_predictions,
         has_surface_elevations,
-        has_bathy_elevations);
+        has_bathy_elevations,
+        prediction_label);
 }
 
 std::vector<photon> convert_dataframe (const dataframe &df,
     bool &has_manual_label,
-    bool &has_predictions)
+    bool &has_predictions,
+    const std::string &prediction_label)
 {
     bool has_surface_elevations;
     bool has_bathy_elevations;
@@ -417,7 +423,8 @@ std::vector<photon> convert_dataframe (const dataframe &df,
         has_manual_label,
         has_predictions,
         has_surface_elevations,
-        has_bathy_elevations);
+        has_bathy_elevations,
+        prediction_label);
 }
 
 } // namespace dataframe
