@@ -31,6 +31,9 @@ int main (int argc, char **argv)
         // Read the points
         const auto df = dataframe::read_buffered (cin);
 
+        if (args.verbose)
+            clog << "Converting dataframe" << endl;
+
         // Convert it to the correct format
         bool has_manual_label = false;
         bool has_predictions = false;
@@ -50,7 +53,16 @@ int main (int argc, char **argv)
             clog << "Sorting points" << endl;
         }
 
-        set<unsigned> classes { 0, 40, 41 };
+        set<unsigned> classes;
+
+        if (args.cls != -1)
+            classes.insert (args.cls);
+        else
+        {
+            classes.insert (0);
+            classes.insert (40);
+            classes.insert (41);
+        }
 
         if (args.verbose)
         {
@@ -64,8 +76,9 @@ int main (int argc, char **argv)
         // Keep track of performance
         unordered_map<long,confusion_matrix> cm;
 
-        // Allocate cm
-        cm[0] = confusion_matrix ();
+        // Allocate cms
+        for (auto i : classes)
+            cm[i] = confusion_matrix ();
 
         // For each classification
         for (auto cls : classes)
@@ -79,6 +92,10 @@ int main (int argc, char **argv)
                 // Get values
                 long actual = static_cast<long> (p[i].cls);
                 long pred = static_cast<int> (p[i].prediction);
+
+                // Ignore it?
+                if (actual == args.ignore_cls)
+                    continue;
 
                 // Map 1 -> 0
                 actual = actual == 1 ? 0 : actual;

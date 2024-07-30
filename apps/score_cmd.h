@@ -15,6 +15,7 @@ struct args
     bool verbose = false;
     int cls = -1;
     std::string prediction_label;
+    int ignore_cls = -1;
 };
 
 std::ostream &operator<< (std::ostream &os, const args &args)
@@ -24,6 +25,7 @@ std::ostream &operator<< (std::ostream &os, const args &args)
     os << "verbose: " << args.verbose << std::endl;
     os << "class: " << args.cls << std::endl;
     os << "prediction_label: '" << args.prediction_label << "'" << std::endl;
+    os << "ignore-class: " << args.ignore_cls << std::endl;
     return os;
 }
 
@@ -38,10 +40,11 @@ args get_args (int argc, char **argv, const std::string &usage)
             {"verbose", no_argument, 0,  'v' },
             {"class", required_argument, 0,  'c' },
             {"prediction-label", required_argument, 0,  'l' },
+            {"ignore-class", required_argument, 0,  'i' },
             {0,      0,           0,  0 }
         };
 
-        int c = getopt_long(argc, argv, "hvc:l:", long_options, &option_index);
+        int c = getopt_long(argc, argv, "hvc:l:i:", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -60,6 +63,7 @@ args get_args (int argc, char **argv, const std::string &usage)
             case 'v': args.verbose = true; break;
             case 'c': args.cls = atol(optarg); break;
             case 'l': args.prediction_label = std::string(optarg); break;
+            case 'i': args.ignore_cls = atol(optarg); break;
         }
     }
 
