@@ -68,6 +68,17 @@ score: build
 
 ##############################################################################
 #
+# Inspect results
+#
+##############################################################################
+.PHONY: view_predictions # View predictions
+view_predictions:
+	@parallel --lb --jobs=100 \
+		"streamlit run ./scripts/view_predictions.py -- --verbose {}" \
+		::: $$(find ./predictions/*_classified.csv)
+
+##############################################################################
+#
 # Get help by running
 #
 #     $ make help
