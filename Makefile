@@ -66,16 +66,9 @@ score: build
 	@echo "Bathy"
 	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 40
 
-# qtrees,bathypathfinder,medianfilter,cshelph,coastnet,openoceans,pointnet
-.PHONY: baseline # Get baseline scores
-baseline: build
-	@./scripts/get_baseline_scores.sh "qtrees"
-	@./scripts/get_baseline_scores.sh "bathypathfinder"
-	@./scripts/get_baseline_scores.sh "medianfilter"
-	@./scripts/get_baseline_scores.sh "cshelph"
-	@./scripts/get_baseline_scores.sh "coastnet"
-	@./scripts/get_baseline_scores.sh "openoceans"
-	@./scripts/get_baseline_scores.sh "pointnet"
+.PHONY: micro_scores # Get micro scores
+micro_scores: build
+	@./scripts/get_micro_scores.sh
 
 ##############################################################################
 #
