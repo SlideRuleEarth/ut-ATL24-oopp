@@ -2,3 +2,5 @@ build/
 data
 predictions/
 venv/
+no_surface_*.csv
+micro_*.txt
