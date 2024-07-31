@@ -3,4 +3,6 @@ data
 predictions/
 venv/
 no_surface_*.csv
-micro_*.txt
+no_surface_*.txt
+micro_oopp.txt
+oopp.csv
