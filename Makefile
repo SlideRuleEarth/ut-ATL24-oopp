@@ -57,17 +57,7 @@ classify: build
 
 .PHONY: score # Score
 score: build
-	@ls -1 $(INPUT) | parallel --verbose --lb --jobs=16 --halt now,fail=1 \
-		"build/debug/score --verbose < predictions/{/.}_classified.csv > predictions/{/.}_score.txt"
-	@echo "Noise"
-	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 0
-	@echo "Surface"
-	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 41
-	@echo "Bathy"
-	@./scripts/summarize_scores.sh "./predictions/*_score.txt" 40
-
-.PHONY: micro_scores # Get micro scores
-micro_scores: build
+	@./scripts/get_oopp_scores.sh
 	@./scripts/get_micro_scores.sh
 
 ##############################################################################
