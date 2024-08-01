@@ -65,6 +65,11 @@ score: build
 # Inspect results
 #
 ##############################################################################
+
+.PHONY: plot # Plot results
+plot:
+	python ./scripts/plot_comparison.py --verbose no_surface_scores_*.csv
+
 .PHONY: view_predictions # View predictions
 view_predictions:
 	@parallel --lb --jobs=100 \
