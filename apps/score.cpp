@@ -18,6 +18,7 @@ string get_confusion_matrix_header ()
         << "\t" << "bal_acc"
         << "\t" << "cal_F1"
         << "\t" << "MCC"
+        << "\t" << "Avg"
         << "\t" << "tp"
         << "\t" << "tn"
         << "\t" << "fp"
@@ -37,6 +38,10 @@ string print (const long cls, const confusion_matrix &cm)
         << "\t" << cm.balanced_accuracy ()
         << "\t" << cm.calibrated_F_beta ()
         << "\t" << cm.MCC ()
+        << "\t" << (cm.F1 ()
+                    + cm.balanced_accuracy ()
+                    + cm.calibrated_F_beta ()
+                    + cm.MCC ()) / 4.0
         << "\t" << cm.true_positives ()
         << "\t" << cm.true_negatives ()
         << "\t" << cm.false_positives ()
@@ -200,7 +205,7 @@ unordered_map<long,confusion_matrix> get_confusion_matrix_map (
             map<long,confusion_matrix> tmp (maps[i].begin (), maps[i].end ());
             for (auto j : tmp)
                 ofs << print (j.first, j.second)
-                    << "\t" << prediction_label
+                    << "\t" << (prediction_label.empty () ? "oopp" : prediction_label)
                     << "\t" << filenames[i]
                     << endl;
         }
