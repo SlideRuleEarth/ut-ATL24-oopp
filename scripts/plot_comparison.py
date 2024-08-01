@@ -55,7 +55,7 @@ def main(args):
 
     df = df.head(50)
     df['average'] = df2.mean(axis=1)
-    df = df.sort_values(by=['average'], ascending=False)
+    df = df.sort_values(by=['filename'], ascending=False)
     fig2 = px.scatter(df, x='filename', y=df.columns)
     fig2.update_layout(title='Prediction comparison')
     fig2.update_layout(yaxis_title='Score')
