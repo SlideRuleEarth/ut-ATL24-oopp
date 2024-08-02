@@ -55,9 +55,14 @@ classify: build
 	@ls -1 $(INPUT) | parallel --verbose --lb --jobs=16 --halt now,fail=1 \
 		"build/debug/classify --verbose < {} > predictions/{/.}_classified.csv"
 
-.PHONY: score # Score
+.PHONY: score # Get scores for OO++
 score: build
 	@./scripts/get_oopp_scores.sh
+	@cat ./no_surface_micro_oopp.txt
+	@cat ./micro_oopp.txt
+
+.PHONY: score_all # Get scores for all models
+score_all: build
 	@./scripts/get_micro_scores.sh
 
 ##############################################################################
@@ -70,11 +75,11 @@ score: build
 plot:
 	python ./scripts/plot_comparison.py --verbose no_surface_scores_*.csv
 
-.PHONY: view_predictions # View predictions
-view_predictions:
+.PHONY: view # View predictions
+view:
 	@parallel --lb --jobs=100 \
 		"streamlit run ./scripts/view_predictions.py -- --verbose {}" \
-		::: $$(find ./predictions/*_classified.csv)
+		::: $$(find ./predictions/*_classified.csv | head)
 
 ##############################################################################
 #
