@@ -35,7 +35,7 @@ int main (int argc, char **argv)
         const auto df = dataframe::read_buffered (cin);
 
         // Convert it to the correct format
-        const auto p = convert_dataframe (df);
+        auto p = convert_dataframe (df);
 
         if (args.verbose)
         {
@@ -47,13 +47,13 @@ int main (int argc, char **argv)
         timer::timer t1;
 
         // Classify the points
-        const auto q = classify (p, args.params, args.use_predictions);
+        p = classify (p, args.params, args.use_predictions);
 
         // Time the classification only
         t1.stop ();
 
         // Write classified output to stdout
-        write_predictions (cout, p, q);
+        write_predictions (cout, p);
 
         // Time classification and I/O
         t0.stop ();
