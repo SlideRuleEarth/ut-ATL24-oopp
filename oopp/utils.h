@@ -296,15 +296,20 @@ std::vector<size_t> find_peaks (const T &x,
     // Set a sentinel
     size_t last_added = x.size ();
 
-    // If the center value is greater than value on the left and right...
+    // If the center value is greater than or equal to the values on
+    // the left and right...
     for (size_t index = 1; index + 1 < x.size(); ++index)
     {
+        // Is there a response at all?
+        if (x[index] == 0.0)
+            continue;
+
         // Is it tall enough?
         if (x[index] < min_prominence)
             continue; // No...
 
         // Is it a peak?
-        if (x[index-1] >= x[index] || x[index] <= x[index+1])
+        if (x[index-1] > x[index] || x[index] < x[index+1])
             continue; // No...
 
         // Is it far enough away from the last added peak?
