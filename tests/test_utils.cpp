@@ -131,16 +131,17 @@ void test_find_peaks ()
     x[4] = 1.0;
     x[5] = 0.98;
     x[6] = 0.99;
-    x[18] = 1.0;
+    x[15] = 1.0;
     auto y = find_peaks (x);
     VERIFY (y.size () == 3);
     VERIFY (y[0] = 5);
     VERIFY (y[1] = 6);
     VERIFY (y[2] = 8);
-    x = gaussian_1D_filter (x, 1.0);
+    x = gaussian_1D_filter (x, 1.1);
     y = find_peaks (x);
-    VERIFY (y.size () == 1);
+    VERIFY (y.size () == 2);
     VERIFY (y[0] == 5);
+    VERIFY (y[1] == 15);
     }
 
     {
