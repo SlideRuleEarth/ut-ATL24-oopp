@@ -50,10 +50,15 @@ test:
 INPUT=./data/local/merged_Sliderule/*.csv
 
 .PHONY: classify # Run classifier
+classify: BUILD=debug
+classify: OO_PARAMS="--verbose"
+classify: MAX_FILES=1000
 classify: build
 	@mkdir -p predictions
-	@ls -1 $(INPUT) | parallel --verbose --lb --jobs=16 --halt now,fail=1 \
-		"build/debug/classify --verbose < {} > predictions/{/.}_classified.csv"
+	@ls -1 $(INPUT) \
+		| head -$(MAX_FILES) \
+		| parallel --verbose --lb --jobs=16 --halt now,fail=1 \
+		"build/$(BUILD)/classify $(OO_PARAMS) < {} > predictions/{/.}_classified.csv"
 
 .PHONY: score # Get scores for OO++
 score: build
@@ -65,6 +70,10 @@ score: build
 score_all: build
 	@./scripts/get_micro_scores.sh
 
+.PHONY: search # Search OO parameter space
+search: build
+	@python ./scripts/generate_search_commands.py
+
 ##############################################################################
 #
 # Inspect results
@@ -73,7 +82,7 @@ score_all: build
 
 .PHONY: plot # Plot results
 plot:
-	python ./scripts/plot_comparison.py --verbose no_surface_scores_*.csv
+	@python ./scripts/plot_comparison.py --verbose no_surface_scores_*.csv
 
 .PHONY: view # View predictions
 view:
