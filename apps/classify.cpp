@@ -47,7 +47,7 @@ int main (int argc, char **argv)
         timer::timer t1;
 
         // Classify the points
-        p = classify (p, args.params, args.use_predictions);
+        p = classify (p, args.oo_params, args.use_predictions);
 
         // Time the classification only
         t1.stop ();
