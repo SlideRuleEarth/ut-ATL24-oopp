@@ -39,7 +39,7 @@ std::ostream &operator<< (std::ostream &os, const photon &p)
 
 struct params
 {
-    double x_resolution = 10.0; // meters
+    double x_resolution = 25.0; // meters
     double z_resolution = 0.2; // meters
     double z_min = -50; // meters
     double z_max = 30; // meters
@@ -51,8 +51,8 @@ struct params
     double bathy_smoothing_sigma = 10.0; // meters
     double min_peak_prominence = 0.01; // probability
     size_t min_peak_distance = 2; // z bins
-    size_t min_surface_photons_per_window = (x_resolution / 0.7) / 2.0; // count
-    size_t min_bathy_photons_per_window = (x_resolution / 0.7) / 2.0; // count
+    size_t min_surface_photons_per_window = 5; // photons
+    size_t min_bathy_photons_per_window = 5; // photons
 };
 
 std::ostream &operator<< (std::ostream &os, const params &params)
@@ -69,6 +69,8 @@ std::ostream &operator<< (std::ostream &os, const params &params)
     os << "bathy-smoothing-sigma: " << params.bathy_smoothing_sigma << "m" << std::endl;
     os << "min-peak-prominence: " << params.min_peak_prominence << std::endl;
     os << "min-peak-distance: " << params.min_peak_distance << " bins" << std::endl;
+    os << "min-surface-photons-per-window: " << params.min_surface_photons_per_window << " photons" << std::endl;
+    os << "min-bathy-photons-per-window: " << params.min_bathy_photons_per_window << " photons" << std::endl;
 
     return os;
 }
