@@ -6,3 +6,5 @@ no_surface_*.csv
 no_surface_*.txt
 micro_oopp.txt
 scores_oopp.csv
+search_commands.bash
+search_results.txt
