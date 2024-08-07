@@ -3,6 +3,10 @@
 #include "oopp/precompiled.h"
 #include "oopp/oopp.h"
 
+#ifndef Z_NAME_STR
+#define Z_NAME_STR "geoid_corr_h"
+#endif
+
 namespace oopp
 {
 
@@ -11,7 +15,7 @@ namespace dataframe
 
 const std::string PI_NAME = std::string ("index_ph");
 const std::string X_NAME = std::string ("x_atc");
-const std::string Z_NAME = std::string ("geoid_corr_h");
+const std::string Z_NAME = std::string (Z_NAME_STR);
 const std::string LABEL_NAME = std::string ("manual_label");
 const std::string PREDICTION_NAME = std::string ("prediction");
 const std::string SEA_SURFACE_NAME = std::string ("sea_surface_h");
