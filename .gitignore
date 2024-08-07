@@ -4,7 +4,7 @@ predictions/
 venv/
 no_surface_*.csv
 no_surface_*.txt
-micro_oopp.txt
-scores_oopp.csv
+micro_*.txt
+scores_*.csv
 search_commands.bash
 search_results.txt
