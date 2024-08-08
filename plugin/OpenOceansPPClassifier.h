@@ -51,9 +51,9 @@ class OpenOceansPPClassifier: public BathyClassifier
             size_t          min_bathy_photons_per_window;
 
             parms_t(): 
-                set_class (true),
-                set_surface (true),
-                use_predictions (true),
+                set_class (false),
+                set_surface (false),
+                use_predictions (false),
                 verbose (true),
                 x_resolution (25.0),
                 z_resolution (0.2),
