@@ -42,6 +42,8 @@ const int OO_MIN_PEAK_PROMINENCE_ID = 1011;
 const int OO_MIN_PEAK_DISTANCE_ID = 1012;
 const int OO_MIN_SURFACE_PHOTONS_PER_WINDOW_ID = 1013;
 const int OO_MIN_BATHY_PHOTONS_PER_WINDOW_ID = 1014;
+const int OO_SURFACE_N_STDDEV = 1015;
+const int OO_BATHY_N_STDDEV = 1016;
 
 args get_args (int argc, char **argv, const std::string &usage)
 {
@@ -67,10 +69,12 @@ args get_args (int argc, char **argv, const std::string &usage)
             {"oo-min-peak-distance-id", required_argument, 0, OO_MIN_PEAK_DISTANCE_ID},
             {"oo-min-surface-photons-per-window-id", required_argument, 0, OO_MIN_SURFACE_PHOTONS_PER_WINDOW_ID},
             {"oo-min-bathy-photons-per-window-id", required_argument, 0, OO_MIN_BATHY_PHOTONS_PER_WINDOW_ID},
+            {"oo-surface-n-stddev", required_argument, 0, OO_SURFACE_N_STDDEV},
+            {"oo-bathy-n-stddev", required_argument, 0, OO_BATHY_N_STDDEV},
             {0,      0,           0,  0 }
         };
 
-        int c = getopt_long(argc, argv, "hvpx:z:i:a:", long_options, &option_index);
+        int c = getopt_long(argc, argv, "hvp", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -102,6 +106,8 @@ args get_args (int argc, char **argv, const std::string &usage)
             case OO_MIN_PEAK_DISTANCE_ID: args.oo_params.min_peak_distance = atol (optarg); break;
             case OO_MIN_SURFACE_PHOTONS_PER_WINDOW_ID: args.oo_params.min_surface_photons_per_window = atol (optarg); break;
             case OO_MIN_BATHY_PHOTONS_PER_WINDOW_ID: args.oo_params.min_bathy_photons_per_window = atol (optarg); break;
+            case OO_SURFACE_N_STDDEV: args.oo_params.surface_n_stddev = atof (optarg); break;
+            case OO_BATHY_N_STDDEV: args.oo_params.bathy_n_stddev = atof (optarg); break;
         }
     }
 
