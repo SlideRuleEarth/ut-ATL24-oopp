@@ -118,11 +118,11 @@ def main(args):
     fig.for_each_trace(lambda t: t.update(name=label_names[t.name]))
     fig.add_scatter(x=df2["x_atc"], y=df2["sea_surface_h"],
                     mode="markers",
-                    marker=dict(size=10, color="green"),
+                    marker=dict(size=10, color="blue"),
                     name='surface est.')
     fig.add_scatter(x=df2["x_atc"], y=df2["bathy_h"],
                     mode="markers",
-                    marker=dict(size=10, color="blue"),
+                    marker=dict(size=10, color="red"),
                     name='bathy est.')
 
     #if aspect_ratio != 0:
