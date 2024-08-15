@@ -39,7 +39,7 @@ std::ostream &operator<< (std::ostream &os, const photon &p)
 
 struct params
 {
-    double x_resolution = 25.0; // meters
+    double x_resolution = 10.0; // meters
     double z_resolution = 0.2; // meters
     double z_min = -50; // meters
     double z_max = 30; // meters
@@ -47,12 +47,15 @@ struct params
     double surface_z_max = 20; // meters
     double bathy_min_depth = 0.5; // meters
     double vertical_smoothing_sigma = 0.5; // meters
-    double surface_smoothing_sigma = 100.0; // meters
-    double bathy_smoothing_sigma = 10.0; // meters
+    double surface_smoothing_sigma = 200.0; // meters
+    double bathy_smoothing_sigma = 100.0; // meters
     double min_peak_prominence = 0.01; // probability
     size_t min_peak_distance = 2; // z bins
-    size_t min_surface_photons_per_window = 5; // photons
-    size_t min_bathy_photons_per_window = 5; // photons
+    // ICESat-2 sampling rate is about 0.7 meters per photon
+    size_t min_surface_photons_per_window = (x_resolution / 0.7) / 3; // photons
+    size_t min_bathy_photons_per_window = (x_resolution / 0.7) / 3; // photons
+    double surface_n_stddev = 3.0;
+    double bathy_n_stddev = 3.0;
 };
 
 std::ostream &operator<< (std::ostream &os, const params &params)
@@ -111,6 +114,70 @@ void write_predictions (std::ostream &os, const T &p)
 
     // Restore precision
     os.precision (pr);
+}
+
+struct surface_estimate
+{
+    double mean;
+    double variance;
+};
+
+template<typename T,typename U>
+surface_estimate get_surface_estimate (const T &p, const U &params, const bool use_predictions)
+{
+    using namespace std;
+    using namespace oopp::utils;
+
+    // Potential surface photon elevations
+    vector<double> z;
+    z.reserve (p.size ());
+
+    // Get photon elevations
+    if (use_predictions)
+    {
+        // Only use those marked as sea surface
+        for (auto i : p)
+            if (i.prediction == sea_surface_class)
+                z.push_back (i.z);
+    }
+    else
+    {
+        // Only use those in range
+        for (auto i : p)
+            if (i.z > params.surface_z_min && i.z < params.surface_z_max)
+                z.push_back (i.z);
+    }
+
+    // Free memory
+    z.shrink_to_fit ();
+
+    if (use_predictions)
+    {
+        // Trust the current predictions
+        surface_estimate e;
+        e.mean = mean (z);
+        e.variance = variance (z);
+
+        return e;
+    }
+
+    // Iterate
+    const auto m = median (z);
+
+    // Select only the photons near the median
+    z.clear ();
+    for (auto i : p)
+    {
+        const double max_distance = 1.0; // meters
+        if (fabs (i.z - m) < max_distance)
+            z.push_back (i.z);
+    }
+
+    surface_estimate e;
+    e.mean = mean (z);
+    e.variance = variance (z);
+
+    return e;
 }
 
 // Get a vector in which each entry corresponds to a (e.g. 10 meter) bin.
@@ -191,11 +258,12 @@ std::vector<double> get_v_bin_elevations (const T &params)
     return e;
 }
 
-template<typename T,typename U,typename V,typename W>
+template<typename T,typename U,typename V,typename W,typename X>
 std::vector<size_t> get_surface_indexes (const T &p,
-    const U &v_bins,
-    const V &v_bin_elevations,
-    const W &params)
+    const U &se,
+    const V &v_bins,
+    const W &v_bin_elevations,
+    const X &params)
 {
     using namespace oopp::utils;
     using namespace std;
@@ -223,12 +291,17 @@ std::vector<size_t> get_surface_indexes (const T &p,
     // Eliminate peaks that can't be surface
     vector<size_t> peak_v_bin_indexes;
 
+    // Determine range from surface estimate
+    //
+    // The range is += N standard deviations from the mean
+    const double surface_z_min = se.mean - params.surface_n_stddev * sqrt (se.variance);
+    const double surface_z_max = se.mean + params.surface_n_stddev * sqrt (se.variance);
     for (auto i : tmp)
     {
         assert (i < v_bin_elevations.size ());
-        if (v_bin_elevations[i] < params.surface_z_min)
+        if (v_bin_elevations[i] < surface_z_min)
             continue;
-        if (v_bin_elevations[i] > params.surface_z_max)
+        if (v_bin_elevations[i] > surface_z_max)
             continue;
         peak_v_bin_indexes.push_back (i);
     }
@@ -289,7 +362,7 @@ std::vector<size_t> get_surface_indexes (const T &p,
         }
     }
 
-    // Get the elevation of the surface
+    // Get the local elevation of the surface
     assert (surface_bin_index < v_bin_elevations.size ());
     const double surface_elevation = v_bin_elevations[surface_bin_index];
 
@@ -319,8 +392,7 @@ std::vector<size_t> get_surface_indexes (const T &p,
     {
         assert (i < p.size ());
         const double d = fabs (p[i].z - u);
-        const double n_stddev = 3.0;
-        if (d < sqrt (v) * n_stddev)
+        if (d < sqrt (v) * params.surface_n_stddev)
             indexes.push_back (i);
     }
 
@@ -331,12 +403,12 @@ std::vector<size_t> get_surface_indexes (const T &p,
     return indexes;
 }
 
-template<typename T,typename U,typename V,typename W>
+template<typename T,typename U,typename V,typename W,typename X>
 std::vector<size_t> get_bathy_indexes (const T &p,
-    U v_bins,
-    const V &v_bin_elevations,
-    const W &params,
-    const double surface_lowest_elevation)
+    const U &se,
+    V v_bins,
+    const W &v_bin_elevations,
+    const X &params)
 {
     using namespace oopp::utils;
     using namespace std;
@@ -345,7 +417,7 @@ std::vector<size_t> get_bathy_indexes (const T &p,
     assert (v_bins.size () == v_bin_elevations.size ());
 
     // Remove indexes of photons below the surface
-    U tmp_v_bins (v_bins.size ());
+    V tmp_v_bins (v_bins.size ());
 
     size_t total_subsurface_photons = 0;
 
@@ -356,8 +428,9 @@ std::vector<size_t> get_bathy_indexes (const T &p,
             const size_t index = v_bins[i][j];
             assert (index < p.size ());
 
-            // If it's to high, skip it
-            if (p[index].z >= surface_lowest_elevation)
+            // If it's too close to the surface, skip it
+            const double z_min = se.mean - params.bathy_n_stddev * sqrt (se.variance);
+            if (p[index].z >= z_min)
                 continue;
 
             // Save the photon index
@@ -435,13 +508,13 @@ std::vector<size_t> get_bathy_indexes (const T &p,
     const double u = mean (bathy_photons);
     const double v = variance (bathy_photons);
 
-    // Get the indexes of all photons in this bin within 2 standard deviations of the surface estimate
+    // Get the indexes of all photons in this bin within some standard
+    // deviations of the bathy estimate
     for (auto bin : v_bins) for (auto i : bin)
     {
         assert (i < p.size ());
         const double d = fabs (p[i].z - u);
-        const double n_stddev = 3.0;
-        if (d < sqrt (v) * n_stddev)
+        if (d < sqrt (v) * params.bathy_n_stddev)
             indexes.push_back (i);
     }
 
@@ -476,34 +549,19 @@ double get_mean_elevation (const T &p, const U &indexes)
     return sum / indexes.size ();
 }
 
-template<typename T,typename U>
-double get_lowest_elevation (const T &p, const U &indexes)
-{
-    if (indexes.empty ())
-        return 0.0;
-
-    double lowest = std::numeric_limits<float>::max ();
-    for (auto i : indexes)
-    {
-        assert (i < p.size ());
-        lowest = std::min (lowest, p[i].z);
-    };
-
-    return lowest;
-}
-
-template<typename T,typename U,typename V,typename W>
+template<typename T,typename U,typename V,typename W,typename X>
 estimates get_estimates (const T &p,
-    const U &v_bins,
-    const V &v_bin_elevations,
-    const W &params,
+    const U &se,
+    const V &v_bins,
+    const W &v_bin_elevations,
+    const X &params,
     const bool use_predictions)
 {
     estimates e;
 
-    // Get surface estimate from existing predictions, if specified
     if (use_predictions)
     {
+        // Get surface estimate from existing predictions
         for (auto bin : v_bins) for (auto i : bin)
         {
             assert (i < p.size ());
@@ -513,82 +571,77 @@ estimates get_estimates (const T &p,
     }
     else
     {
-        e.surface_indexes = get_surface_indexes (p, v_bins, v_bin_elevations, params);
+        // Get surface indexes from the vertical histogram
+        e.surface_indexes = get_surface_indexes (p, se, v_bins, v_bin_elevations, params);
     }
 
     // If there is no surface, there is no bathy
     if (e.surface_indexes.empty ())
         return e;
 
-    // Get the elevation
+    // Compute surface elevation for this window
     e.surface_elevation = get_mean_elevation (p, e.surface_indexes);
 
     // Get bathy
-    const double surface_lowest_elevation = get_lowest_elevation (p, e.surface_indexes);
-    e.bathy_indexes = get_bathy_indexes (p, v_bins, v_bin_elevations, params, surface_lowest_elevation);
+    e.bathy_indexes = get_bathy_indexes (p, se, v_bins, v_bin_elevations, params);
     e.bathy_elevation = get_mean_elevation (p, e.bathy_indexes);
 
     return e;
 }
 
-template<typename T>
-T smooth_surface (T e, const double sigma)
+template<typename T,typename U,typename V,typename W>
+std::vector<double> get_smooth_estimates (const T &p, const U &h_bins, const V &e, const double sigma, W op)
 {
     using namespace std;
     using namespace oopp::utils;
 
-    // Extract surface
-    vector<double> x (e.size ());
+    // Check invariants
+    assert (!p.empty ());
+    assert (h_bins.size () == e.size ());
+
+    // Get the bounds
+    const double x_min = min_element (p.begin (), p.end (),
+            [](const auto &a, const auto &b) { return a.x < b.x; })->x;
+    const double x_max = max_element (p.begin (), p.end (),
+            [](const auto &a, const auto &b) { return a.x < b.x; })->x;
+
+    // Get estimates at 'resolution' m intervals
+    const double resolution = 5.0; // meters
+    const size_t total = (x_max - x_min) / resolution + 1;
+    vector<double> z (total, NAN);
 
 #pragma omp parallel for
-    for (size_t i = 0; i < x.size (); ++i)
+    for (size_t i = 0; i < h_bins.size (); ++i)
     {
-        assert (!std::isnan (e[i].surface_elevation));
-        x[i] = e[i].surface_elevation;
+        for (auto j : h_bins[i])
+        {
+            assert (j < p.size ());
+            assert (p[j].x >= x_min);
+            const size_t index = (p[j].x - x_min) / resolution;
+
+            // The photon gets the elevation associated with the window
+            assert (!std::isnan (op (e[i])));
+            assert (index < z.size ());
+            z[index] = op (e[i]);
+        }
     }
 
     // Smooth it
-    x = gaussian_1D_filter (x, sigma);
+    z = gaussian_1D_filter (z, sigma / resolution);
 
-    // Put the smoothed values back into the estimates
-#pragma omp parallel for
-    for (size_t i = 0; i < x.size (); ++i)
-    {
-        assert (!std::isnan (x[i]));
-        e[i].surface_elevation = x[i];
-    }
-
-    return e;
-}
-
-template<typename T>
-T smooth_bathy (T e, const double sigma)
-{
-    using namespace std;
-    using namespace oopp::utils;
-
-    // Extract bathy
-    vector<double> x (e.size ());
+    // Associate smooth estimates with photons
+    vector<double> s (p.size (), 0.0);
 
 #pragma omp parallel for
-    for (size_t i = 0; i < x.size (); ++i)
+    for (size_t i = 0; i < p.size (); ++i)
     {
-        assert (!std::isnan (e[i].bathy_elevation));
-        x[i] = e[i].bathy_elevation;
+        assert (p[i].x >= x_min);
+        const size_t index = (p[i].x - x_min) / resolution;
+        assert (index < z.size ());
+        s[i] = z[index];
     }
 
-    // Smooth it
-    x = gaussian_1D_filter (x, sigma);
-
-    // Put the smoothed values back into the estimates
-#pragma omp parallel for
-    for (size_t i = 0; i < x.size (); ++i)
-    {
-        assert (!std::isnan (x[i]));
-        e[i].bathy_elevation = x[i];
-    }
-
-    return e;
+    return s;
 }
 
 template<typename T,typename U>
@@ -597,13 +650,21 @@ T classify (T p, const U &params, const bool use_predictions)
     using namespace std;
     using namespace oopp::utils;
 
+    // Assume that there is a single sea surface in the track. If
+    // there is a case that a land mass separates two water bodies,
+    // and the surface of the water bodies is significantly different,
+    // then this will likely cause this function to fail. However, for
+    // the on-demand product, when this occurs, you should change your
+    // AOIs so that the two water bodies are separated.
+    const auto se = get_surface_estimate (p, params, use_predictions);
+
     // Get indexes of photons in each along-track bin
     const auto h_bins = get_h_bins (p, params);
 
     // Get each vertical bin's elevation
     const auto v_bin_elevations = get_v_bin_elevations (params);
 
-    // Save estimates for each horizontal window
+    // Save estimates for each horizontal window here
     vector<estimates> e (h_bins.size ());
 
     // Get estimates for each horizontal window
@@ -618,21 +679,34 @@ T classify (T p, const U &params, const bool use_predictions)
         const auto v_bins = get_v_bins (p, h_bins[i], params);
 
         // Get surface and bathy estimates
-        e[i] = get_estimates (p, v_bins, v_bin_elevations, params, use_predictions);
+        e[i] = get_estimates (p, se, v_bins, v_bin_elevations, params, use_predictions);
     }
 
     // Smooth the surface and bathy elevation estimates
-    e = smooth_surface (e, params.surface_smoothing_sigma / params.x_resolution);
-    e = smooth_bathy (e, params.bathy_smoothing_sigma / params.x_resolution);
+    const auto ss = get_smooth_estimates (p, h_bins, e, params.surface_smoothing_sigma,
+        [](const estimates &e) { return e.surface_elevation; });
+    const auto sb = get_smooth_estimates (p, h_bins, e, params.bathy_smoothing_sigma,
+        [](const estimates &e) { return e.bathy_elevation; });
+
+    assert (ss.size () == p.size ());
+    assert (sb.size () == p.size ());
+
+    // Assign surface and bathy elevations
+#pragma omp parallel for
+    for (size_t i = 0; i < h_bins.size (); ++i)
+    {
+        for (auto j : h_bins[i])
+        {
+            assert (j < p.size ());
+            p[j].surface_elevation = ss[j];
+            p[j].bathy_elevation = sb[j];
+        }
+    }
 
     // Assign estimates
 #pragma omp parallel for
     for (size_t i = 0; i < h_bins.size (); ++i)
     {
-        // If there are no photons in the h_bin, there is nothing to do
-        if (h_bins[i].empty ())
-            continue;
-
         // Save surface predictions
         for (auto j : e[i].surface_indexes)
         {
@@ -645,15 +719,6 @@ T classify (T p, const U &params, const bool use_predictions)
         {
             assert (j < p.size ());
             p[j].prediction = bathy_class;
-        }
-
-        // Save surface and bathy elevations for all photons in this
-        // horizontal window
-        for (auto j : h_bins[i])
-        {
-            assert (j < p.size ());
-            p[j].surface_elevation = e[i].surface_elevation;
-            p[j].bathy_elevation = e[i].bathy_elevation;
         }
     }
 

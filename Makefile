@@ -69,6 +69,7 @@ score: build
 .PHONY: score_all # Get scores for all models
 score_all: build
 	@./scripts/get_micro_scores.sh
+	@cat ./micro_*.txt
 
 .PHONY: search # Search OO parameter space
 search: build
