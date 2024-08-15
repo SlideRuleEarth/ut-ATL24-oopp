@@ -55,7 +55,7 @@ class OpenOceansPPClassifier: public BathyClassifier
                 set_surface (false),
                 use_predictions (false),
                 verbose (true),
-                x_resolution (25.0),
+                x_resolution (10.0),
                 z_resolution (0.2),
                 z_min (-50),
                 z_max (30),
@@ -63,12 +63,12 @@ class OpenOceansPPClassifier: public BathyClassifier
                 surface_z_max (20),
                 bathy_min_depth (0.5),
                 vertical_smoothing_sigma (0.5),
-                surface_smoothing_sigma (100.0),
-                bathy_smoothing_sigma (10.0),
+                surface_smoothing_sigma (200.0),
+                bathy_smoothing_sigma (100.0),
                 min_peak_prominence (0.01),
                 min_peak_distance (2),
-                min_surface_photons_per_window (5),
-                min_bathy_photons_per_window (5) {};
+                min_surface_photons_per_window ((x_resolution / 0.7) / 3),
+                min_bathy_photons_per_window ((x_resolution / 0.7) / 3) {};
             ~parms_t() {};
         };
 

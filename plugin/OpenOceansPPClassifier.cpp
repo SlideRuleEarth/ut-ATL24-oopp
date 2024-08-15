@@ -201,7 +201,6 @@ bool OpenOceansPPClassifier::run (const vector<BathyParms::extent_t*>& extents)
                     .h5_index = (i << 32) | j, // TEMPORARY HACK to get results below
                     .x = photons[j].x_atc,
                     .z = photons[j].ortho_h,
-                    .cls = static_cast<unsigned>(photons[j].class_ph),
                     .prediction = BathyParms::UNCLASSIFIED
                 };
                 samples.push_back(photon);
@@ -219,14 +218,17 @@ bool OpenOceansPPClassifier::run (const vector<BathyParms::extent_t*>& extents)
             .bathy_min_depth = parms.bathy_min_depth,
             .vertical_smoothing_sigma = parms.vertical_smoothing_sigma,
             .surface_smoothing_sigma = parms.surface_smoothing_sigma,
+            .bathy_smoothing_sigma = parms.bathy_smoothing_sigma,
             .min_peak_prominence = parms.min_peak_prominence,
             .min_peak_distance = parms.min_peak_distance,
             .min_surface_photons_per_window = parms.min_surface_photons_per_window,
-            .min_bathy_photons_per_window = parms.min_bathy_photons_per_window 
+            .min_bathy_photons_per_window = parms.min_bathy_photons_per_window,
+            .surface_n_stddev = 3.0,
+            .bathy_n_stddev = 3.0
         }; 
 
         // Run classification
-        classify(samples, params, parms.use_predictions);
+        samples = classify(samples, params, parms.use_predictions);
 
         // Update extents
         for(auto sample: samples)
