@@ -3,14 +3,14 @@ import argparse
 
 def get_make_commands(args):
     cmds = []
-    for i in [23, 24, 25, 26, 27]:
-        cmds.append(f'make BUILD={args.build} OO_PARAMS="--verbose --oo-x-resolution={i}" classify')
-    for i in [1.5, 2.0, 2.5, 3.0]:
-        cmds.append(f'make BUILD={args.build} OO_PARAMS="--verbose --oo-vertical-smoothing-sigma={i}" classify')
-    for i in [0.01, 0.025, 0.05]:
-        cmds.append(f'make BUILD={args.build} OO_PARAMS="--verbose --oo-min-peak-prominence={i}" classify')
-    for i in [1, 2, 3, 4, 5]:
-        cmds.append(f'make BUILD={args.build} OO_PARAMS="--verbose --oo-min-peak-distance={i}" classify')
+    for i in [2.0, 2.5, 3.0, 3.5, 4.0]:
+        cmds.append(f'make BUILD={args.build} OO_PARAMS="--verbose --oo-surface-n-stddev={i}" classify')
+    for i in [2.0, 2.5, 3.0, 3.5, 4.0]:
+        cmds.append(f'make BUILD={args.build} OO_PARAMS="--verbose --oo-bathy-n-stddev={i}" classify')
+    for i in [2, 3, 4, 5, 6, 7, 8]:
+        cmds.append(f'make BUILD={args.build} OO_PARAMS="--verbose --oo-min-surface-photons-per-window={i}" classify')
+    for i in [2, 3, 4, 5, 6, 7, 8]:
+        cmds.append(f'make BUILD={args.build} OO_PARAMS="--verbose --oo-min-bathy-photons-per-window={i}" classify')
     return cmds
 
 
