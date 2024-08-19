@@ -47,7 +47,7 @@ test:
 #
 ##############################################################################
 
-INPUT=./data/local/merged_Sliderule/*.csv
+INPUT=./data/local/merged_Sliderule_v1/*.csv
 
 .PHONY: classify # Run classifier
 classify: BUILD=debug
@@ -73,7 +73,7 @@ score_all: build
 
 .PHONY: search # Search OO parameter space
 search: build
-	@python ./scripts/generate_search_commands.py
+	@python ./scripts/generate_search_commands.py --build=release
 
 ##############################################################################
 #
