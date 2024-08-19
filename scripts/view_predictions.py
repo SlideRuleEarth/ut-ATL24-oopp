@@ -92,12 +92,12 @@ def main(args):
                    '41': 'sea surface',
                    '45': 'water column'}
 
-    fig = px.scatter(df2, x="x_atc", y="geoid_corr_h",
+    fig = px.scatter(df2, x="x_atc", y="ortho_h",
                      color='manual_label',
                      color_discrete_map=cdm,
-                     hover_data=["x_atc", "geoid_corr_h"],
+                     hover_data=["x_atc", "ortho_h"],
                      labels={'x_atc': 'Along-track distance (m)',
-                             'geoid_corr_h': 'Elevation (m)'})
+                             'ortho_h': 'Elevation (m)'})
     fig.for_each_trace(lambda t: t.update(name=label_names[t.name]))
     # if aspect_ratio != 0:
     #     fig.update_yaxes(scaleanchor="x", scaleratio=aspect_ratio)
@@ -109,12 +109,12 @@ def main(args):
     fig.update_layout(legend_traceorder='normal')
     st.plotly_chart(fig, use_container_width=True)
 
-    fig = px.scatter(df2, x="x_atc", y="geoid_corr_h",
+    fig = px.scatter(df2, x="x_atc", y="ortho_h",
                      color='prediction',
                      color_discrete_map=cdm,
-                     hover_data=["x_atc", "geoid_corr_h"],
+                     hover_data=["x_atc", "ortho_h"],
                      labels={'x_atc': 'Along-track distance (m)',
-                             'geoid_corr_h': 'Elevation (m)'})
+                             'ortho_h': 'Elevation (m)'})
     fig.for_each_trace(lambda t: t.update(name=label_names[t.name]))
     fig.add_scatter(x=df2["x_atc"], y=df2["sea_surface_h"],
                     mode="markers",

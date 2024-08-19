@@ -37,6 +37,8 @@ std::ostream &operator<< (std::ostream &os, const photon &p)
     return os;
 }
 
+const double icesat_2_sampling_rate = 0.7;
+
 struct params
 {
     double x_resolution = 10.0; // meters
@@ -51,10 +53,9 @@ struct params
     double bathy_smoothing_sigma = 100.0; // meters
     double min_peak_prominence = 0.01; // probability
     size_t min_peak_distance = 2; // z bins
-    // ICESat-2 sampling rate is about 0.7 meters per photon
-    size_t min_surface_photons_per_window = (x_resolution / 0.7) / 3; // photons
-    size_t min_bathy_photons_per_window = (x_resolution / 0.7) / 3; // photons
-    double surface_n_stddev = 3.0;
+    size_t min_surface_photons_per_window = 0.25 * (x_resolution / icesat_2_sampling_rate); // photons
+    size_t min_bathy_photons_per_window = 0.25 * (x_resolution / icesat_2_sampling_rate); // photons
+    double surface_n_stddev = 3.5;
     double bathy_n_stddev = 3.0;
 };
 
@@ -74,6 +75,8 @@ std::ostream &operator<< (std::ostream &os, const params &params)
     os << "min-peak-distance: " << params.min_peak_distance << " bins" << std::endl;
     os << "min-surface-photons-per-window: " << params.min_surface_photons_per_window << " photons" << std::endl;
     os << "min-bathy-photons-per-window: " << params.min_bathy_photons_per_window << " photons" << std::endl;
+    os << "surface-n-stddev: " << params.surface_n_stddev << "m" << std::endl;
+    os << "bathy-n-stddev: " << params.bathy_n_stddev << "m" << std::endl;
 
     return os;
 }
@@ -87,7 +90,7 @@ void write_predictions (std::ostream &os, const T &p)
     const auto pr = os.precision ();
 
     // Print along-track meters
-    os << "index_ph,x_atc,geoid_corr_h,manual_label,prediction,sea_surface_h,bathy_h" << endl;
+    os << "index_ph,x_atc,ortho_h,manual_label,prediction,sea_surface_h,bathy_h" << endl;
     for (size_t i = 0; i < p.size (); ++i)
     {
         // Write the index
@@ -624,6 +627,41 @@ std::vector<double> get_smooth_estimates (const T &p, const U &h_bins, const V &
             assert (index < z.size ());
             z[index] = op (e[i]);
         }
+    }
+
+    // Fill in NANs from left to right
+    double last = 0.0;
+    auto zl (z);
+    for (size_t i = 0; i < z.size (); ++i)
+    {
+        if (isnan (zl[i]))
+            zl[i] = last;
+        else
+        {
+            last = zl[i];
+        }
+
+    }
+
+    // Fill in NANs from right to left
+    last = 0.0;
+    auto zr (z);
+    for (size_t i = z.size (); i != 0; --i)
+    {
+        assert (i - 1 < zr.size ());
+        if (isnan (zr[i - 1]))
+            zr[i - 1] = last;
+        else
+        {
+            last = zr[i - 1];
+        }
+    }
+
+    // Average them together
+    for (size_t i = 0; i < z.size (); ++i)
+    {
+        z[i] = (zl[i] + zr[i]) / 2.0;
+        assert (!isnan (z[i]));
     }
 
     // Smooth it
