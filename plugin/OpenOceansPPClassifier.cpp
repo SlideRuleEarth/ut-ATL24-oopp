@@ -197,13 +197,20 @@ bool OpenOceansPPClassifier::run (const vector<BathyParms::extent_t*>& extents)
             BathyParms::photon_t* photons = extents[i]->photons;
             for(size_t j = 0; j < extents[i]->photon_count; j++)
             {
+                // Populate photon
                 oopp::photon photon = {
                     .h5_index = (i << 32) | j, // TEMPORARY HACK to get results below
                     .x = photons[j].x_atc,
                     .z = photons[j].ortho_h,
-                    .prediction = BathyParms::UNCLASSIFIED
+                    .prediction = static_cast<unsigned>(photons[j].class_ph)
                 };
                 samples.push_back(photon);
+
+                // Clear classification (if necessary)
+                if(parms.set_class)
+                {
+                    photons[j].class_ph = BathyParms::UNCLASSIFIED;
+                }
             }
         }
 
