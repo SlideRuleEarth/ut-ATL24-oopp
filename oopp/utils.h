@@ -62,6 +62,7 @@ double variance (const T &x)
     double sum2 = 0.0;
     for (size_t i = 0; i < x.size (); ++i)
     {
+        assert (!std::isnan (x[i]));
         ++total;
         sum += x[i];
         sum2 += x[i] * x[i];
@@ -73,9 +74,14 @@ double variance (const T &x)
 
     // Variance = E[x^2] - E[x]^2
     const double mean = sum / total;
-    const double var = sum2 / total - mean * mean;
+    double var = sum2 / total - mean * mean;
 
     // E[x^2] >= E[x]^2
+    //
+    // Handle rounding error
+    if (var < 0.0)
+        var = 0.0;
+
     assert (var >= 0.0);
 
     return var;
