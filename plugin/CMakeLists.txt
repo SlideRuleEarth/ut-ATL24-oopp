@@ -36,4 +36,4 @@ string(REGEX REPLACE "\n$" "" BUILDINFO "${BUILDINFO}")
 target_compile_definitions (openoceanspp PUBLIC BUILDINFO="${BUILDINFO}")
 
 # Plugin Installation #
-install (TARGETS openoceanspp LIBRARY DESTINATION ${INSTALLDIR}/etc/sliderule)
+install (TARGETS openoceanspp LIBRARY DESTINATION ${INSTALLDIR}/lib/sliderule)
