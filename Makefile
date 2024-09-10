@@ -47,7 +47,7 @@ test:
 #
 ##############################################################################
 
-INPUT=./data/local/merged_Sliderule_v1/*.csv
+INPUT=./data/remote/latest/*.csv
 
 .PHONY: classify # Run classifier
 classify: BUILD=debug
@@ -66,30 +66,9 @@ score: build
 	@cat ./no_surface_micro_oopp.txt
 	@cat ./micro_oopp.txt
 
-.PHONY: score_all # Get scores for all models
-score_all: build
-	@./scripts/get_micro_scores.sh
-	@cat ./micro_*.txt
-
 .PHONY: search # Search OO parameter space
 search: build
 	@python ./scripts/generate_search_commands.py --build=release
-
-##############################################################################
-#
-# Inspect results
-#
-##############################################################################
-
-.PHONY: plot # Plot results
-plot:
-	@python ./scripts/plot_comparison.py --verbose no_surface_scores_*.csv
-
-.PHONY: view # View predictions
-view:
-	@parallel --lb --jobs=100 \
-		"streamlit run ./scripts/view_predictions.py -- --verbose {}" \
-		::: $$(find ./predictions/*_classified.csv | head)
 
 ##############################################################################
 #
