@@ -43,6 +43,13 @@ int main (int argc, char **argv)
             clog << "Classifying points" << endl;
         }
 
+        // Save the photon indexes
+        vector<size_t> h5_indexes (p.size ());
+
+#pragma omp parallel for
+        for (size_t i = 0; i < h5_indexes.size (); ++i)
+            h5_indexes[i] = p[i].h5_index;
+
         // Start a timer
         timer::timer t1;
 
@@ -51,6 +58,15 @@ int main (int argc, char **argv)
 
         // Time the classification only
         t1.stop ();
+
+        // Check invariants: The samples should be in the same order in which
+        // they were read
+#pragma omp parallel for
+        for (size_t i = 0; i < p.size (); ++i)
+        {
+            assert (h5_indexes[i] == p[i].h5_index);
+            ((void) (i)); // Eliminate unused variable warning
+        }
 
         // Write classified output to stdout
         write_predictions (cout, p);
