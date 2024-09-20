@@ -73,8 +73,8 @@ double variance (const T &x)
         return 0.0;
 
     // Variance = E[x^2] - E[x]^2
-    const double mean = sum / total;
-    double var = sum2 / total - mean * mean;
+    const double _mean = sum / total;
+    double var = sum2 / total - _mean * _mean;
 
     // E[x^2] >= E[x]^2
     //
