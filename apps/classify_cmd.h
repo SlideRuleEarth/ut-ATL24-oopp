@@ -1,8 +1,8 @@
 #pragma once
 
-#include "oopp/precompiled.h"
-#include "oopp/cmd_utils.h"
-#include "oopp/oopp.h"
+#include "../oopp/precompiled.h"
+#include "../oopp/cmd_utils.h"
+#include "../oopp/oopp.h"
 
 namespace oopp
 {
