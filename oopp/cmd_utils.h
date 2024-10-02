@@ -1,6 +1,6 @@
 #pragma once
 
-#include "oopp/precompiled.h"
+#include "precompiled.h"
 
 namespace oopp
 {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "oopp/precompiled.h"
-#include "oopp/utils.h"
+#include "precompiled.h"
+#include "utils.h"
 
 namespace oopp
 {
@@ -722,9 +722,9 @@ T classify (T p, const U &params, const bool use_predictions)
 
     // Smooth the surface and bathy elevation estimates
     const auto ss = get_smooth_estimates (p, h_bins, e, params.surface_smoothing_sigma,
-        [](const estimates &e) { return e.surface_elevation; });
+        [](const estimates &_e) { return _e.surface_elevation; });
     const auto sb = get_smooth_estimates (p, h_bins, e, params.bathy_smoothing_sigma,
-        [](const estimates &e) { return e.bathy_elevation; });
+        [](const estimates &_e) { return _e.bathy_elevation; });
 
     assert (ss.size () == p.size ());
     assert (sb.size () == p.size ());
