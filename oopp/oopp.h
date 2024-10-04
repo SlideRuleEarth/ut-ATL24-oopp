@@ -722,9 +722,9 @@ T classify (T p, const U &params, const bool use_predictions)
 
     // Smooth the surface and bathy elevation estimates
     const auto ss = get_smooth_estimates (p, h_bins, e, params.surface_smoothing_sigma,
-        [](const estimates &e) { return e.surface_elevation; });
+        [](const estimates &a) { return a.surface_elevation; });
     const auto sb = get_smooth_estimates (p, h_bins, e, params.bathy_smoothing_sigma,
-        [](const estimates &e) { return e.bathy_elevation; });
+        [](const estimates &a) { return a.bathy_elevation; });
 
     assert (ss.size () == p.size ());
     assert (sb.size () == p.size ());
