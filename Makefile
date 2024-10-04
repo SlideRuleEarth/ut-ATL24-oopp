@@ -63,8 +63,8 @@ classify: build
 .PHONY: score # Get scores for OO++
 score: build
 	@./scripts/get_oopp_scores.sh
-	@cat ./no_surface_micro_oopp.txt
-	@cat ./micro_oopp.txt
+	@cat ./micro_scores_no_surface.txt
+	@cat ./micro_scores_all.txt
 
 .PHONY: search # Search OO parameter space
 search: build

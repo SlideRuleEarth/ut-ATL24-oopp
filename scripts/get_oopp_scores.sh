@@ -8,11 +8,11 @@ input=$(ls -1 ./predictions/*_classified.csv)
 
 build/debug/score --verbose \
     --ignore-class=41 --class=40 \
-    --csv-filename=no_surface_scores_oopp.csv \
+    --csv-filename=micro_scores_no_surface.csv \
     ${input} \
-    > no_surface_micro_oopp.txt
+    > micro_scores_no_surface.txt
 
 build/debug/score --verbose \
-    --csv-filename=scores_oopp.csv \
+    --csv-filename=micro_scores_all.csv \
     ${input} \
-    > micro_oopp.txt
+    > micro_scores_all.txt

@@ -2,9 +2,5 @@ build/
 data
 predictions/
 venv/
-no_surface_*.csv
-no_surface_*.txt
-micro_*.txt
-scores_*.csv
-search_commands.bash
-search_results.txt
+micro_scores_all.csv
+micro_scores_no_surface.csv
