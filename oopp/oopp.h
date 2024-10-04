@@ -90,7 +90,7 @@ void write_predictions (std::ostream &os, const T &p)
     const auto pr = os.precision ();
 
     // Print along-track meters
-    os << "index_ph,x_atc,ortho_h,manual_label,prediction,sea_surface_h,bathy_h" << endl;
+    os << "index_ph,x_atc,geoid_corr_h,manual_label,prediction,sea_surface_h,bathy_h" << endl;
     for (size_t i = 0; i < p.size (); ++i)
     {
         // Write the index

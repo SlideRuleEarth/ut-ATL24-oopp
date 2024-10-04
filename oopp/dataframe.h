@@ -11,7 +11,7 @@ namespace dataframe
 
 const std::string PI_NAME = std::string ("index_ph");
 const std::string X_NAME = std::string ("x_atc");
-const std::string Z_NAME = std::string ("ortho_h");
+const std::string Z_NAME = std::string ("geoid_corr_h");
 const std::string LABEL_NAME = std::string ("manual_label");
 const std::string PREDICTION_NAME = std::string ("prediction");
 const std::string SEA_SURFACE_NAME = std::string ("sea_surface_h");
@@ -366,7 +366,7 @@ std::vector<photon> convert_dataframe (
     if (x_it == headers.end ())
         throw runtime_error ("Can't find 'along_track_dist' in dataframe");
     if (z_it == headers.end ())
-        throw runtime_error ("Can't find 'ortho_h' in dataframe");
+        throw runtime_error ("Can't find 'geoid_corr_h' in dataframe");
 
     has_manual_label = cls_it != headers.end ();
     has_predictions = prediction_it != headers.end ();
