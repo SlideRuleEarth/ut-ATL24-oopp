@@ -72,6 +72,18 @@ search: build
 
 ##############################################################################
 #
+# View results
+#
+##############################################################################
+
+.PHONY: view # View predictions
+view:
+	@parallel --lb --jobs=100 \
+		"streamlit run ../ATL24_viewer/view_predictions.py -- --verbose {}" \
+		::: $$(find ./predictions/*.csv | head)
+
+##############################################################################
+#
 # Get help by running
 #
 #     $ make help
