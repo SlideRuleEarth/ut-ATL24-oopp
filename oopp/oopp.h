@@ -694,6 +694,11 @@ T classify (T p, const U &params)
     assert (ss.size () == p.size ());
     assert (sb.size () == p.size ());
 
+    // Zero out predictions
+#pragma omp parallel for
+    for (size_t i = 0; i < p.size (); ++i)
+        p[i].prediction = 0;
+
     // Assign surface and bathy elevations
 #pragma omp parallel for
     for (size_t i = 0; i < h_bins.size (); ++i)
