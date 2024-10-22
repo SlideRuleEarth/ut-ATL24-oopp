@@ -24,6 +24,26 @@ struct photon
     double bathy_elevation;
 };
 
+bool operator== (const photon &a, const photon &b)
+{
+    if (a.h5_index != b.h5_index)
+        return false;
+    if (a.x != b.x)
+        return false;
+    if (a.z != b.z)
+        return false;
+    if (a.cls != b.cls)
+        return false;
+    if (a.prediction != b.prediction)
+        return false;
+    if (a.surface_elevation != b.surface_elevation)
+        return false;
+    if (a.bathy_elevation != b.bathy_elevation)
+        return false;
+
+    return true;
+}
+
 std::ostream &operator<< (std::ostream &os, const photon &p)
 {
     os << "index=" << p.h5_index
