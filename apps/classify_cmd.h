@@ -14,7 +14,6 @@ struct args
 {
     bool help = false;
     bool verbose = false;
-    bool use_predictions = false;
     oopp::params oo_params;
 };
 
@@ -23,7 +22,6 @@ std::ostream &operator<< (std::ostream &os, const args &args)
     os << std::boolalpha;
     os << "help: " << args.help << std::endl;
     os << "verbose: " << args.verbose << std::endl;
-    os << "use-predictions: " << args.use_predictions << std::endl;
     os << args.oo_params;
     return os;
 }
@@ -54,7 +52,6 @@ args get_args (int argc, char **argv, const std::string &usage)
         static struct option long_options[] = {
             {"help", no_argument, 0,  'h'},
             {"verbose", no_argument, 0,  'v'},
-            {"use-predictions", no_argument, 0,  'p'},
             {"oo-x-resolution", required_argument, 0, OO_X_RESOLUTION_ID},
             {"oo-z-resolution", required_argument, 0, OO_Z_RESOLUTION_ID},
             {"oo-z-min", required_argument, 0, OO_Z_MIN_ID},
@@ -74,7 +71,7 @@ args get_args (int argc, char **argv, const std::string &usage)
             {0,      0,           0,  0 }
         };
 
-        int c = getopt_long(argc, argv, "hvp", long_options, &option_index);
+        int c = getopt_long(argc, argv, "hv", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -91,7 +88,6 @@ args get_args (int argc, char **argv, const std::string &usage)
                 return args;
             }
             case 'v': args.verbose = true; break;
-            case 'p': args.use_predictions = true; break;
             case OO_X_RESOLUTION_ID: args.oo_params.x_resolution = atof (optarg); break;
             case OO_Z_RESOLUTION_ID: args.oo_params.z_resolution = atof (optarg); break;
             case OO_Z_MIN_ID: args.oo_params.z_min = atof (optarg); break;
