@@ -25,6 +25,7 @@ macro(add_test name)
     target_precompile_headers(${name} PUBLIC oopp/precompiled.h)
 endmacro()
 
+add_test(test_classify)
 add_test(test_dataframe)
 add_test(test_oopp)
 add_test(test_utils)
