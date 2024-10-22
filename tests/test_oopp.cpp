@@ -97,25 +97,23 @@ void test_classify (size_t n)
     const auto p = get_random_photons (n);
     const params a;
     set<unsigned> classes { 0, 1, 40, 41 };
-    for (auto use_predictions : {true, false})
+
+    // Get each photons classification
+    const auto q = classify (p, a);
+    // Make sure they are all valid
+    for (auto i : q)
     {
-        // Get each photons classification
-        const auto q = classify (p, a, use_predictions);
-        // Make sure they are all valid
-        for (auto i : q)
-        {
-            auto it = classes.find (i.prediction);
-            VERIFY (it != classes.end ());
-        }
-        // Make sure nothing changed that shouldn't have
-        VERIFY (p.size () == q.size ());
-        for (size_t i = 0; i < p.size (); ++i)
-        {
-            VERIFY (p[i].h5_index == q[i].h5_index);
-            VERIFY (p[i].x == q[i].x);
-            VERIFY (p[i].z == q[i].z);
-            VERIFY (p[i].cls == q[i].cls);
-        }
+        auto it = classes.find (i.prediction);
+        VERIFY (it != classes.end ());
+    }
+    // Make sure nothing changed that shouldn't have
+    VERIFY (p.size () == q.size ());
+    for (size_t i = 0; i < p.size (); ++i)
+    {
+        VERIFY (p[i].h5_index == q[i].h5_index);
+        VERIFY (p[i].x == q[i].x);
+        VERIFY (p[i].z == q[i].z);
+        VERIFY (p[i].cls == q[i].cls);
     }
 }
 

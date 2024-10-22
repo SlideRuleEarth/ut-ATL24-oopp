@@ -126,7 +126,7 @@ struct surface_estimate
 };
 
 template<typename T,typename U>
-surface_estimate get_surface_estimate (const T &p, const U &params, const bool use_predictions)
+surface_estimate get_surface_estimate (const T &p, const U &params)
 {
     using namespace std;
     using namespace oopp::utils;
@@ -136,33 +136,12 @@ surface_estimate get_surface_estimate (const T &p, const U &params, const bool u
     z.reserve (p.size ());
 
     // Get photon elevations
-    if (use_predictions)
-    {
-        // Only use those marked as sea surface
-        for (auto i : p)
-            if (i.prediction == sea_surface_class)
-                z.push_back (i.z);
-    }
-    else
-    {
-        // Only use those in range
-        for (auto i : p)
-            if (i.z > params.surface_z_min && i.z < params.surface_z_max)
-                z.push_back (i.z);
-    }
+    for (auto i : p)
+        if (i.z > params.surface_z_min && i.z < params.surface_z_max)
+            z.push_back (i.z);
 
     // Free memory
     z.shrink_to_fit ();
-
-    if (use_predictions)
-    {
-        // Trust the current predictions
-        surface_estimate e;
-        e.mean = mean (z);
-        e.variance = variance (z);
-
-        return e;
-    }
 
     // Iterate
     const auto m = median (z);
@@ -557,26 +536,12 @@ estimates get_estimates (const T &p,
     const U &se,
     const V &v_bins,
     const W &v_bin_elevations,
-    const X &params,
-    const bool use_predictions)
+    const X &params)
 {
     estimates e;
 
-    if (use_predictions)
-    {
-        // Get surface estimate from existing predictions
-        for (auto bin : v_bins) for (auto i : bin)
-        {
-            assert (i < p.size ());
-            if (p[i].prediction == sea_surface_class)
-                e.surface_indexes.push_back (i);
-        }
-    }
-    else
-    {
-        // Get surface indexes from the vertical histogram
-        e.surface_indexes = get_surface_indexes (p, se, v_bins, v_bin_elevations, params);
-    }
+    // Get surface indexes from the vertical histogram
+    e.surface_indexes = get_surface_indexes (p, se, v_bins, v_bin_elevations, params);
 
     // If there is no surface, there is no bathy
     if (e.surface_indexes.empty ())
@@ -683,7 +648,7 @@ std::vector<double> get_smooth_estimates (const T &p, const U &h_bins, const V &
 }
 
 template<typename T,typename U>
-T classify (T p, const U &params, const bool use_predictions)
+T classify (T p, const U &params)
 {
     using namespace std;
     using namespace oopp::utils;
@@ -694,7 +659,7 @@ T classify (T p, const U &params, const bool use_predictions)
     // then this will likely cause this function to fail. However, for
     // the on-demand product, when this occurs, you should change your
     // AOIs so that the two water bodies are separated.
-    const auto se = get_surface_estimate (p, params, use_predictions);
+    const auto se = get_surface_estimate (p, params);
 
     // Get indexes of photons in each along-track bin
     const auto h_bins = get_h_bins (p, params);
@@ -717,7 +682,7 @@ T classify (T p, const U &params, const bool use_predictions)
         const auto v_bins = get_v_bins (p, h_bins[i], params);
 
         // Get surface and bathy estimates
-        e[i] = get_estimates (p, se, v_bins, v_bin_elevations, params, use_predictions);
+        e[i] = get_estimates (p, se, v_bins, v_bin_elevations, params);
     }
 
     // Smooth the surface and bathy elevation estimates
