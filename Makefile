@@ -84,6 +84,22 @@ view:
 
 ##############################################################################
 #
+# Make everything
+#
+##############################################################################
+
+.PHONY: everything # Make everything. This will take a while.
+everything:
+	@scripts/yesno.bash "This will clean, classify, ... etc."
+	@echo "Build/test"
+	@$(MAKE) --no-print-directory BUILD=release clean build test
+	@echo "Cleaning local files"
+	@rm -rf predictions/
+	@echo "Classifying/scoring"
+	@$(MAKE) --no-print-directory classify score BUILD=release
+
+##############################################################################
+#
 # Get help by running
 #
 #     $ make help
