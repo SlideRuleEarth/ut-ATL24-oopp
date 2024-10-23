@@ -92,7 +92,7 @@ view:
 everything:
 	@scripts/yesno.bash "This will clean, classify, ... etc."
 	@echo "Build/test"
-	@$(MAKE) --no-print-directory BUILD=release clean build test
+	@$(MAKE) --no-print-directory clean build test BUILD=release
 	@echo "Cleaning local files"
 	@rm -rf predictions/
 	@echo "Classifying/scoring"
