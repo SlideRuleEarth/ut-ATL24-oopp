@@ -41,11 +41,45 @@ void test_classify ()
     }
 }
 
+void test_empty_classify ()
+{
+    // Random points
+    mt19937 rng(12345);
+    const size_t total = 1000;
+    const double xmin = 100;
+    const double xmax = 200;
+
+    // No photons near sea surface
+    //
+    // This means that no photons are available to get a surface
+    // estimate...
+    const double zmin = 1000.0;
+    const double zmax  = 2000.0;
+
+    uniform_real_distribution<double> dx (xmin, xmax);
+    uniform_real_distribution<double> dz (zmin, zmax);
+
+    vector<photon> p (total);
+    size_t index = 0;
+
+    for (auto &i : p)
+    {
+        i.h5_index = index++;
+        i.x = dx (rng);
+        i.z = dz (rng);
+    }
+
+    oopp::params oo_params;
+    const auto q = classify (p, oo_params);
+    VERIFY (q.size () == total);
+}
+
 int main ()
 {
     try
     {
         test_classify ();
+        test_empty_classify ();
 
         return 0;
     }
