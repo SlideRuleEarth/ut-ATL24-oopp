@@ -160,6 +160,9 @@ surface_estimate get_surface_estimate (const T &p, const U &params)
         if (i.z > params.surface_z_min && i.z < params.surface_z_max)
             z.push_back (i.z);
 
+    if (z.empty ())
+        return surface_estimate { 0.0, 0.0 };
+
     // Free memory
     z.shrink_to_fit ();
 
